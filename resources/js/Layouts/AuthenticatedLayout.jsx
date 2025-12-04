@@ -12,7 +12,8 @@ import {
     UserCircleIcon,
     SunIcon,
     MoonIcon,
-    TagIcon
+    TagIcon,
+    CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 import { useTheme } from '../Contexts/ThemeContext';
@@ -26,6 +27,7 @@ export default function AuthenticatedLayout({ children, title }) {
         { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
         { name: 'Member', href: '/members', icon: UsersIcon },
         { name: 'Jenis Member', href: '/membership-types', icon: TagIcon },
+        { name: 'Paket Harian', href: '/daily-packages', icon: CurrencyDollarIcon },
         { name: 'Absensi', href: '/attendances', icon: ClipboardDocumentCheckIcon },
         { name: 'Belum Terdaftar', href: '/unregistered', icon: CreditCardIcon },
         { name: 'Rekap', href: '/reports', icon: ChartBarIcon },

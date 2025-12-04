@@ -14,21 +14,27 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
     protected $dateFrom;
     protected $dateTo;
     protected $memberId;
+    protected $status;
 
-    public function __construct($dateFrom, $dateTo, $memberId = null)
+    public function __construct($dateFrom, $dateTo, $memberId = null, $status = 'all')
     {
         $this->dateFrom = $dateFrom;
         $this->dateTo = $dateTo;
         $this->memberId = $memberId;
+        $this->status = $status;
     }
 
     public function collection()
     {
-        $query = Attendance::with(['member', 'member.membershipType'])
+        $query = Attendance::with(['member', 'member.membershipType', 'dailyPackage'])
             ->whereBetween('date', [$this->dateFrom, $this->dateTo]);
 
         if ($this->memberId) {
             $query->where('member_id', $this->memberId);
+        }
+
+        if ($this->status && $this->status !== 'all') {
+            $query->where('is_member', $this->status === 'member');
         }
 
         return $query->latest('date')->latest('check_in_time')->get();
@@ -39,8 +45,9 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
         return [
             'No',
             'Tanggal',
-            'Nama Member',
-            'Jenis Membership',
+            'Nama',
+            'Status',
+            'Paket/Membership',
             'RFID UID',
             'Waktu Masuk',
         ];
@@ -54,8 +61,11 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
         return [
             $no,
             $attendance->date->format('d/m/Y'),
-            $attendance->member->name ?? '-',
-            $attendance->member->membershipType->name ?? '-',
+            $attendance->is_member ? ($attendance->member->name ?? '-') : $attendance->guest_name,
+            $attendance->is_member ? 'Member' : 'Non-Member',
+            $attendance->is_member 
+                ? ($attendance->member->membershipType->name ?? '-') 
+                : ($attendance->dailyPackage->name ?? '-'),
             $attendance->rfid_uid,
             $attendance->check_in_time->format('H:i:s'),
         ];

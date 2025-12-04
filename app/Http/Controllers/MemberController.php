@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ImageHelper;
 use App\Models\Member;
 use App\Models\MembershipType;
 use App\Models\UnregisteredRfid;
@@ -75,7 +76,8 @@ class MemberController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            $validated['photo'] = $request->file('photo')->store('members', 'public');
+            // Compress dan simpan gambar (max 800px, quality 80%)
+            $validated['photo'] = ImageHelper::compressAndStore($request->file('photo'), 'members', 800, 80);
         }
 
         $validated['status'] = $request->boolean('status') ? 'active' : 'inactive';
@@ -116,11 +118,12 @@ class MemberController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
-            // Upload foto baru
+            // Hapus foto lama jika ada
             if ($member->photo) {
                 Storage::disk('public')->delete($member->photo);
             }
-            $validated['photo'] = $request->file('photo')->store('members', 'public');
+            // Compress dan simpan gambar baru (max 800px, quality 80%)
+            $validated['photo'] = ImageHelper::compressAndStore($request->file('photo'), 'members', 800, 80);
         } elseif ($request->boolean('remove_photo')) {
             // Hapus foto jika user klik hapus foto
             if ($member->photo) {

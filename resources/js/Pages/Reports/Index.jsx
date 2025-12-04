@@ -1,17 +1,18 @@
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { CalendarDaysIcon, UsersIcon, ChartBarIcon, ArrowTrendingUpIcon, FunnelIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, UsersIcon, ChartBarIcon, ArrowTrendingUpIcon, FunnelIcon, ArrowDownTrayIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 
-export default function ReportsIndex({ stats, memberStats, members, filters }) {
+export default function ReportsIndex({ stats, memberStats, nonMemberStats, members, filters }) {
     const [dateFrom, setDateFrom] = useState(filters.date_from);
     const [dateTo, setDateTo] = useState(filters.date_to);
     const [memberId, setMemberId] = useState(filters.member_id || '');
+    const [status, setStatus] = useState(filters.status || 'all');
     const [loading, setLoading] = useState(false);
 
     const handleFilter = () => {
         setLoading(true);
-        router.get('/reports', { date_from: dateFrom, date_to: dateTo, member_id: memberId || null }, { preserveState: true, onFinish: () => setLoading(false) });
+        router.get('/reports', { date_from: dateFrom, date_to: dateTo, member_id: memberId || null, status }, { preserveState: true, onFinish: () => setLoading(false) });
     };
 
     const setQuickFilter = (days) => {
@@ -24,7 +25,8 @@ export default function ReportsIndex({ stats, memberStats, members, filters }) {
 
     const statCards = [
         { title: 'Total Kehadiran', value: stats.totalAttendances, icon: ChartBarIcon, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-900/30' },
-        { title: 'Member Hadir', value: stats.uniqueMembers, icon: UsersIcon, color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-50 dark:bg-green-900/30' },
+        { title: 'Member', value: stats.memberAttendances, icon: UsersIcon, color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-50 dark:bg-green-900/30' },
+        { title: 'Non-Member', value: stats.nonMemberAttendances, icon: UserGroupIcon, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-900/30' },
         { title: 'Rata-rata/Hari', value: stats.avgPerDay, icon: ArrowTrendingUpIcon, color: 'text-primary-600 dark:text-primary-400', bgColor: 'bg-primary-50 dark:bg-primary-900/30' },
     ];
 
@@ -55,6 +57,14 @@ export default function ReportsIndex({ stats, memberStats, members, filters }) {
                         </div>
                     </div>
                     <div>
+                        <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Status</label>
+                        <select value={status} onChange={(e) => setStatus(e.target.value)} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[150px]">
+                            <option value="all">Semua</option>
+                            <option value="member">Member</option>
+                            <option value="non-member">Non-Member</option>
+                        </select>
+                    </div>
+                    <div>
                         <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Member</label>
                         <select value={memberId} onChange={(e) => setMemberId(e.target.value)} className="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-[200px]">
                             <option value="">Semua Member</option>
@@ -66,7 +76,7 @@ export default function ReportsIndex({ stats, memberStats, members, filters }) {
                         Terapkan Filter
                     </button>
                     <a 
-                        href={`/reports/export?date_from=${dateFrom}&date_to=${dateTo}${memberId ? `&member_id=${memberId}` : ''}`}
+                        href={`/reports/export?date_from=${dateFrom}&date_to=${dateTo}${memberId ? `&member_id=${memberId}` : ''}&status=${status}`}
                         className="px-6 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium flex items-center gap-2"
                     >
                         <ArrowDownTrayIcon className="w-5 h-5" />
@@ -81,7 +91,7 @@ export default function ReportsIndex({ stats, memberStats, members, filters }) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                 {statCards.map((card, index) => (
                     <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                         <div className="flex items-start justify-between">
@@ -95,9 +105,10 @@ export default function ReportsIndex({ stats, memberStats, members, filters }) {
                 ))}
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            {/* Member Stats */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-6">
                 <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Detail Kehadiran per Member</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Kehadiran Member</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full">
@@ -133,12 +144,54 @@ export default function ReportsIndex({ stats, memberStats, members, filters }) {
                         </tbody>
                     </table>
                 </div>
-
                 {memberStats.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
-                        <ChartBarIcon className="w-16 h-16 mb-4" />
-                        <p className="text-lg font-medium">Tidak ada data kehadiran</p>
-                        <p className="text-sm">Coba ubah filter tanggal untuk melihat data</p>
+                    <div className="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
+                        <UsersIcon className="w-12 h-12 mb-3" />
+                        <p>Tidak ada data kehadiran member</p>
+                    </div>
+                )}
+            </div>
+
+            {/* Non-Member Stats */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Kehadiran Non-Member</h3>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Paket</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Hadir</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                            {nonMemberStats?.map((item, index) => (
+                                <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <UserGroupIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                                            </div>
+                                            <span className="font-medium text-gray-900 dark:text-white">{item.guest_name}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="px-2.5 py-1 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-400 rounded-lg text-sm">
+                                            {item.daily_package?.name || '-'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4"><span className="font-semibold text-gray-900 dark:text-white">{item.total}</span><span className="text-gray-500 dark:text-gray-400 ml-1">kali</span></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                {(!nonMemberStats || nonMemberStats.length === 0) && (
+                    <div className="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
+                        <UserGroupIcon className="w-12 h-12 mb-3" />
+                        <p>Tidak ada data kehadiran non-member</p>
                     </div>
                 )}
             </div>

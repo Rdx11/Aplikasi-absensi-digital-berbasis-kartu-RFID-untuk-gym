@@ -1,27 +1,31 @@
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState, useEffect, useRef } from 'react';
-import { CalendarDaysIcon, ClockIcon, UsersIcon, ArrowPathIcon, SignalIcon, CheckCircleIcon, XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, ClockIcon, UsersIcon, ArrowPathIcon, SignalIcon, CheckCircleIcon, XMarkIcon, MagnifyingGlassIcon, PlusIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 
-export default function AttendancesIndex({ attendances, members, filters }) {
+export default function AttendancesIndex({ attendances, members, dailyPackages, filters }) {
     const [date, setDate] = useState(filters.date || new Date().toISOString().split('T')[0]);
     const [search, setSearch] = useState(filters.search || '');
     const [loading, setLoading] = useState(false);
     const [isLive, setIsLive] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showManualModal, setShowManualModal] = useState(false);
     const [latestMember, setLatestMember] = useState(null);
     const intervalRef = useRef(null);
     const lastAttendanceIdRef = useRef(null);
     const isToday = date === new Date().toISOString().split('T')[0];
 
-    // Set initial last attendance ID
+    const { data, setData, post, processing, errors, reset } = useForm({
+        guest_name: '',
+        daily_package_id: '',
+    });
+
     useEffect(() => {
         if (attendances.data?.length > 0) {
             lastAttendanceIdRef.current = attendances.data[0].id;
         }
     }, []);
 
-    // Auto refresh dan deteksi absensi baru
     useEffect(() => {
         if (isLive && isToday) {
             intervalRef.current = setInterval(() => {
@@ -32,16 +36,14 @@ export default function AttendancesIndex({ attendances, members, filters }) {
                         const newAttendances = page.props.attendances.data;
                         if (newAttendances?.length > 0) {
                             const newestId = newAttendances[0].id;
-                            // Jika ada absensi baru
                             if (lastAttendanceIdRef.current && newestId !== lastAttendanceIdRef.current) {
-                                const newMember = newAttendances[0].member;
-                                if (newMember) {
+                                const attendance = newAttendances[0];
+                                if (attendance.is_member && attendance.member) {
                                     setLatestMember({
-                                        ...newMember,
-                                        check_in_time: newAttendances[0].check_in_time
+                                        ...attendance.member,
+                                        check_in_time: attendance.check_in_time
                                     });
                                     setShowModal(true);
-                                    // Auto close setelah 5 detik
                                     setTimeout(() => setShowModal(false), 5000);
                                 }
                             }
@@ -51,11 +53,8 @@ export default function AttendancesIndex({ attendances, members, filters }) {
                 });
             }, 3000);
         }
-        
         return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
+            if (intervalRef.current) clearInterval(intervalRef.current);
         };
     }, [isLive, isToday]);
 
@@ -75,6 +74,16 @@ export default function AttendancesIndex({ attendances, members, filters }) {
     const refresh = () => {
         setLoading(true);
         router.reload({ only: ['attendances'], onFinish: () => setLoading(false) });
+    };
+
+    const submitManual = (e) => {
+        e.preventDefault();
+        post('/attendances/manual', {
+            onSuccess: () => {
+                setShowManualModal(false);
+                reset();
+            }
+        });
     };
 
     const formatTime = (dateString) => new Date(dateString).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -103,14 +112,19 @@ export default function AttendancesIndex({ attendances, members, filters }) {
                         <ArrowPathIcon className={`w-5 h-5 text-gray-600 dark:text-gray-300 ${loading ? 'animate-spin' : ''}`} />
                     </button>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setShowManualModal(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors font-medium"
+                    >
+                        <UserPlusIcon className="w-5 h-5" />
+                        Absensi Manual
+                    </button>
                     {isToday && (
                         <button
                             onClick={() => setIsLive(!isLive)}
                             className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                                isLive 
-                                    ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400' 
-                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                                isLive ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                             }`}
                         >
                             <SignalIcon className={`w-4 h-4 ${isLive ? 'animate-pulse' : ''}`} />
@@ -120,7 +134,6 @@ export default function AttendancesIndex({ attendances, members, filters }) {
                     <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                         <UsersIcon className="w-5 h-5" />
                         <span className="font-medium">{attendances.total || attendances.data?.length || 0}</span>
-                        <span>absensi</span>
                     </div>
                 </div>
             </div>
@@ -130,7 +143,8 @@ export default function AttendancesIndex({ attendances, members, filters }) {
                     <table className="w-full">
                         <thead>
                             <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Member</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">RFID</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Waktu Masuk</th>
                             </tr>
@@ -141,15 +155,36 @@ export default function AttendancesIndex({ attendances, members, filters }) {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
-                                                {attendance.member?.photo ? <img src={`/storage/${attendance.member.photo}`} className="w-10 h-10 object-cover" alt="" /> : <UsersIcon className="w-5 h-5 text-primary-600 dark:text-primary-400" />}
+                                                {attendance.is_member && attendance.member?.photo ? (
+                                                    <img src={`/storage/${attendance.member.photo}`} className="w-10 h-10 object-cover" alt="" />
+                                                ) : (
+                                                    <UsersIcon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                                                )}
                                             </div>
                                             <div>
-                                                <p className="font-medium text-gray-900 dark:text-white">{attendance.member?.name}</p>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">{attendance.member?.membership_type?.name}</p>
+                                                <p className="font-medium text-gray-900 dark:text-white">
+                                                    {attendance.is_member ? attendance.member?.name : attendance.guest_name}
+                                                </p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                    {attendance.is_member ? attendance.member?.membership_type?.name : attendance.daily_package?.name}
+                                                </p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4"><code className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono text-gray-700 dark:text-gray-300">{attendance.rfid_uid}</code></td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
+                                            attendance.is_member 
+                                                ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400' 
+                                                : 'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-400'
+                                        }`}>
+                                            {attendance.is_member ? 'Member' : 'Non-Member'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <code className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono text-gray-700 dark:text-gray-300">
+                                            {attendance.rfid_uid}
+                                        </code>
+                                    </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                                             <ClockIcon className="w-4 h-4 text-green-500" />{formatTime(attendance.check_in_time)}
@@ -165,36 +200,86 @@ export default function AttendancesIndex({ attendances, members, filters }) {
                     <div className="flex flex-col items-center justify-center py-16 text-gray-400 dark:text-gray-500">
                         <CalendarDaysIcon className="w-16 h-16 mb-4" />
                         <p className="text-lg font-medium">Tidak ada data absensi</p>
-                        <p className="text-sm">Belum ada member yang absen pada tanggal ini</p>
+                        <p className="text-sm">Belum ada yang absen pada tanggal ini</p>
                     </div>
                 )}
             </div>
 
-            {/* Pagination */}
             {attendances.links && attendances.links.length > 3 && (
                 <div className="flex justify-center gap-1 mt-6">
                     {attendances.links.map((link, index) => (
-                        <Link
-                            key={index}
-                            href={link.url || '#'}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                link.active 
-                                    ? 'bg-primary-600 text-white' 
-                                    : link.url 
-                                        ? 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600' 
-                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                            }`}
-                            dangerouslySetInnerHTML={{ __html: link.label }}
-                        />
+                        <Link key={index} href={link.url || '#'} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${link.active ? 'bg-primary-600 text-white' : link.url ? 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'}`} dangerouslySetInnerHTML={{ __html: link.label }} />
                     ))}
+                </div>
+            )}
+
+            {/* Modal Absensi Manual */}
+            {showManualModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Absensi Manual (Non-Member)</h3>
+                            <button onClick={() => { setShowManualModal(false); reset(); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                <XMarkIcon className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <form onSubmit={submitManual} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                    Nama Lengkap<span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={data.guest_name}
+                                    onChange={(e) => setData('guest_name', e.target.value)}
+                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    placeholder="Masukkan nama lengkap"
+                                />
+                                {errors.guest_name && <p className="text-red-500 text-sm mt-1">{errors.guest_name}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                    Paket Harian<span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={data.daily_package_id}
+                                    onChange={(e) => setData('daily_package_id', e.target.value)}
+                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                >
+                                    <option value="">Pilih paket harian</option>
+                                    {dailyPackages?.map((pkg) => (
+                                        <option key={pkg.id} value={pkg.id}>
+                                            {pkg.name} - Rp {Number(pkg.price).toLocaleString('id-ID')}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.daily_package_id && <p className="text-red-500 text-sm mt-1">{errors.daily_package_id}</p>}
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="flex-1 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50"
+                                >
+                                    {processing ? 'Menyimpan...' : 'Simpan Absensi'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowManualModal(false); reset(); }}
+                                    className="px-4 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
+                                >
+                                    Batal
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
 
             {/* Modal Foto Member */}
             {showModal && latestMember && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200">
-                        {/* Header */}
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden">
                         <div className="bg-green-500 px-6 py-4 flex items-center justify-between">
                             <div className="flex items-center gap-2 text-white">
                                 <CheckCircleIcon className="w-6 h-6" />
@@ -204,42 +289,23 @@ export default function AttendancesIndex({ attendances, members, filters }) {
                                 <XMarkIcon className="w-6 h-6" />
                             </button>
                         </div>
-                        
-                        {/* Content */}
                         <div className="p-6 text-center">
-                            {/* Foto */}
                             <div className="w-40 h-40 mx-auto mb-4 rounded-full overflow-hidden border-4 border-green-500 shadow-lg">
                                 {latestMember.photo ? (
-                                    <img 
-                                        src={`/storage/${latestMember.photo}`} 
-                                        alt={latestMember.name}
-                                        className="w-full h-full object-cover"
-                                    />
+                                    <img src={`/storage/${latestMember.photo}`} alt={latestMember.name} className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="w-full h-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
                                         <UsersIcon className="w-20 h-20 text-primary-600 dark:text-primary-400" />
                                     </div>
                                 )}
                             </div>
-                            
-                            {/* Info */}
-                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                                {latestMember.name}
-                            </h3>
-                            <p className="text-gray-500 dark:text-gray-400 mb-3">
-                                {latestMember.membership_type?.name || 'Member'}
-                            </p>
-                            
-                            {/* Waktu */}
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{latestMember.name}</h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-3">{latestMember.membership_type?.name || 'Member'}</p>
                             <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full">
                                 <ClockIcon className="w-5 h-5 text-green-500" />
-                                <span className="font-medium text-gray-700 dark:text-gray-300">
-                                    {formatTime(latestMember.check_in_time)}
-                                </span>
+                                <span className="font-medium text-gray-700 dark:text-gray-300">{formatTime(latestMember.check_in_time)}</span>
                             </div>
                         </div>
-                        
-                        {/* Footer */}
                         <div className="px-6 pb-6">
                             <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <div className="h-full bg-green-500 animate-shrink-width" />
@@ -251,13 +317,8 @@ export default function AttendancesIndex({ attendances, members, filters }) {
             )}
 
             <style>{`
-                @keyframes shrink-width {
-                    from { width: 100%; }
-                    to { width: 0%; }
-                }
-                .animate-shrink-width {
-                    animation: shrink-width 5s linear forwards;
-                }
+                @keyframes shrink-width { from { width: 100%; } to { width: 0%; } }
+                .animate-shrink-width { animation: shrink-width 5s linear forwards; }
             `}</style>
         </AuthenticatedLayout>
     );

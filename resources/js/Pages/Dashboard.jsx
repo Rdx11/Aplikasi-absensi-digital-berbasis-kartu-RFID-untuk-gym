@@ -160,14 +160,13 @@ export default function Dashboard({ stats, chartData, recentAttendances }) {
                                             <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                                                 <ClockIcon className="w-4 h-4" />
                                                 {attendance.check_in_time}
-                                                {attendance.check_out_time && ` - ${attendance.check_out_time}`}
                                             </div>
                                         </div>
                                     </div>
                                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                        attendance.status === 'Hadir' 
-                                            ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400' 
-                                            : 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400'
+                                        attendance.status === 'Member' 
+                                            ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400' 
+                                            : 'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-400'
                                     }`}>
                                         {attendance.status}
                                     </span>

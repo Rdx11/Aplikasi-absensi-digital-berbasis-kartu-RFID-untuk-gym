@@ -10,6 +10,9 @@ class Attendance extends Model
     protected $fillable = [
         'member_id',
         'rfid_uid',
+        'is_member',
+        'guest_name',
+        'daily_package_id',
         'check_in_time',
         'check_out_time',
         'date',
@@ -19,10 +22,16 @@ class Attendance extends Model
         'check_in_time' => 'datetime',
         'check_out_time' => 'datetime',
         'date' => 'date',
+        'is_member' => 'boolean',
     ];
 
     public function member(): BelongsTo
     {
         return $this->belongsTo(Member::class);
+    }
+
+    public function dailyPackage(): BelongsTo
+    {
+        return $this->belongsTo(DailyPackage::class);
     }
 }

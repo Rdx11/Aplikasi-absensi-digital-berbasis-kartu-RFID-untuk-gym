@@ -30,18 +30,18 @@ class DashboardController extends Controller
         });
 
         // Recent attendances
-        $recentAttendances = Attendance::with('member')
+        $recentAttendances = Attendance::with(['member', 'dailyPackage'])
             ->whereDate('date', today())
             ->latest('check_in_time')
             ->take(5)
             ->get()
             ->map(fn($a) => [
                 'id' => $a->id,
-                'member_name' => $a->member->name,
-                'member_photo' => $a->member->photo,
-                'check_in_time' => $a->check_in_time->timezone('Asia/Jakarta')->format('H:i'),
-                'check_out_time' => $a->check_out_time?->timezone('Asia/Jakarta')->format('H:i'),
-                'status' => $a->check_out_time ? 'Pulang' : 'Hadir',
+                'is_member' => $a->is_member,
+                'member_name' => $a->is_member ? $a->member?->name : $a->guest_name,
+                'member_photo' => $a->is_member ? $a->member?->photo : null,
+                'check_in_time' => $a->check_in_time->timezone('Asia/Makassar')->format('H:i'),
+                'status' => $a->is_member ? 'Member' : 'Non-Member',
             ]);
 
         return Inertia::render('Dashboard', [

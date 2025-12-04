@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\DailyPackageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MembershipTypeController;
@@ -24,7 +25,11 @@ Route::middleware(['auth'])->group(function () {
 
     // Attendances
     Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances.index');
+    Route::post('/attendances/manual', [AttendanceController::class, 'storeManual'])->name('attendances.manual');
     Route::get('/attendances/history', [AttendanceController::class, 'history'])->name('attendances.history');
+
+    // Daily Packages
+    Route::resource('daily-packages', DailyPackageController::class)->except(['show']);
 
     // Unregistered RFIDs
     Route::get('/unregistered', [UnregisteredRfidController::class, 'index'])->name('unregistered.index');
