@@ -42,6 +42,16 @@ export default function MembersIndex({ members, membershipTypes, filters }) {
         expired: 'Expired',
     };
 
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        });
+    };
+
     return (
         <AuthenticatedLayout title="Member">
             <Head title="Member" />
@@ -120,7 +130,7 @@ export default function MembersIndex({ members, membershipTypes, filters }) {
                                     </td>
                                     <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{member.phone}</td>
                                     <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{member.membership_type?.name || '-'}</td>
-                                    <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{member.membership_end_date}</td>
+                                    <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{formatDate(member.membership_end_date)}</td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${statusStyles[member.status]}`}>
                                             {statusLabels[member.status]}

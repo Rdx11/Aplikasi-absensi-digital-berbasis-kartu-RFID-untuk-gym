@@ -33,14 +33,14 @@ class DashboardController extends Controller
         $recentAttendances = Attendance::with('member')
             ->whereDate('date', today())
             ->latest('check_in_time')
-            ->take(10)
+            ->take(5)
             ->get()
             ->map(fn($a) => [
                 'id' => $a->id,
                 'member_name' => $a->member->name,
                 'member_photo' => $a->member->photo,
-                'check_in_time' => $a->check_in_time->format('H:i'),
-                'check_out_time' => $a->check_out_time?->format('H:i'),
+                'check_in_time' => $a->check_in_time->timezone('Asia/Jakarta')->format('H:i'),
+                'check_out_time' => $a->check_out_time?->timezone('Asia/Jakarta')->format('H:i'),
                 'status' => $a->check_out_time ? 'Pulang' : 'Hadir',
             ]);
 

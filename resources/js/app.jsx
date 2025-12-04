@@ -8,7 +8,7 @@ import { ThemeProvider } from './Contexts/ThemeContext';
 const pages = import.meta.glob('./Pages/**/*.jsx');
 
 createInertiaApp({
-    title: (title) => title ? `${title} - MIKO GYM` : 'MIKO GYM',
+    title: (title) => title ? `${title} - Bricks Gym` : 'Bricks Gym',
     resolve: async (name) => {
         const page = await pages[`./Pages/${name}.jsx`]();
         return page;

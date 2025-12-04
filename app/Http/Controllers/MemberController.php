@@ -13,6 +13,11 @@ class MemberController extends Controller
 {
     public function index(Request $request)
     {
+        // Update status expired untuk member yang sudah habis masa berlakunya
+        Member::where('status', 'active')
+            ->where('membership_end_date', '<', today())
+            ->update(['status' => 'expired']);
+
         $query = Member::with('membershipType');
 
         if ($request->search) {
@@ -111,10 +116,20 @@ class MemberController extends Controller
         ]);
 
         if ($request->hasFile('photo')) {
+            // Upload foto baru
             if ($member->photo) {
                 Storage::disk('public')->delete($member->photo);
             }
             $validated['photo'] = $request->file('photo')->store('members', 'public');
+        } elseif ($request->boolean('remove_photo')) {
+            // Hapus foto jika user klik hapus foto
+            if ($member->photo) {
+                Storage::disk('public')->delete($member->photo);
+            }
+            $validated['photo'] = null;
+        } else {
+            // Jangan update foto jika tidak ada perubahan
+            unset($validated['photo']);
         }
 
         $validated['status'] = $request->boolean('status') ? 'active' : 'inactive';

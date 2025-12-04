@@ -26,13 +26,20 @@ class AttendanceController extends Controller
             $query->where('member_id', $request->member_id);
         }
 
+        if ($request->search) {
+            $query->whereHas('member', function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request->search}%")
+                  ->orWhere('rfid_uid', 'like', "%{$request->search}%");
+            });
+        }
+
         $attendances = $query->latest('check_in_time')->paginate(15)->withQueryString();
         $members = Member::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('Attendances/Index', [
             'attendances' => $attendances,
             'members' => $members,
-            'filters' => $request->only(['date', 'date_from', 'date_to', 'member_id']),
+            'filters' => $request->only(['date', 'date_from', 'date_to', 'member_id', 'search']),
         ]);
     }
 

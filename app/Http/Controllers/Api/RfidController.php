@@ -58,39 +58,10 @@ class RfidController extends Controller
             ], 403);
         }
 
-        // Cek apakah sudah check-in hari ini
-        $todayAttendance = Attendance::where('member_id', $member->id)
+        // Hitung jumlah absen hari ini
+        $todayCount = Attendance::where('member_id', $member->id)
             ->whereDate('date', today())
-            ->first();
-
-        if ($todayAttendance) {
-            // Jika belum check-out, lakukan check-out
-            if (!$todayAttendance->check_out_time) {
-                $todayAttendance->update(['check_out_time' => now()]);
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Check-out berhasil',
-                    'type' => 'check_out',
-                    'member' => [
-                        'name' => $member->name,
-                        'photo' => $member->photo,
-                    ],
-                    'time' => now()->format('H:i:s'),
-                ]);
-            }
-
-            // Sudah check-in dan check-out
-            return response()->json([
-                'success' => true,
-                'message' => 'Sudah absen hari ini',
-                'type' => 'already',
-                'member' => [
-                    'name' => $member->name,
-                    'check_in' => $todayAttendance->check_in_time->format('H:i'),
-                    'check_out' => $todayAttendance->check_out_time->format('H:i'),
-                ],
-            ]);
-        }
+            ->count();
 
         // Buat check-in baru
         Attendance::create([
@@ -110,6 +81,7 @@ class RfidController extends Controller
                 'membership_type' => $member->membershipType->name ?? null,
             ],
             'time' => now()->format('H:i:s'),
+            'today_count' => $todayCount + 1,
         ]);
     }
 }

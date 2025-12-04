@@ -57,10 +57,8 @@ export default function AuthenticatedLayout({ children, title }) {
                 {/* Logo */}
                 <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">M</span>
-                        </div>
-                        <span className="text-lg font-bold text-gray-900 dark:text-white">MIKO GYM</span>
+                        <img src="/storage/logo/logo.jpg" alt="Bricks Gym" className="w-8 h-8 rounded-lg object-cover" />
+                        <span className="text-lg font-bold text-gray-900 dark:text-white">Bricks Gym</span>
                     </div>
                     <button
                         onClick={() => setSidebarOpen(false)}

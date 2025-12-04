@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AttendanceExport;
 use App\Models\Attendance;
 use App\Models\Member;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
@@ -59,5 +61,16 @@ class ReportController extends Controller
                 'member_id' => $request->member_id,
             ],
         ]);
+    }
+
+    public function export(Request $request)
+    {
+        $dateFrom = $request->date_from ?? today()->subDays(30)->format('Y-m-d');
+        $dateTo = $request->date_to ?? today()->format('Y-m-d');
+        $memberId = $request->member_id;
+
+        $filename = 'rekap-absensi-' . $dateFrom . '-' . $dateTo . '.xlsx';
+
+        return Excel::download(new AttendanceExport($dateFrom, $dateTo, $memberId), $filename);
     }
 }

@@ -26,10 +26,8 @@ export default function Login() {
                 <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 to-primary-700 p-12 flex-col justify-between relative">
                     <div>
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-                                <span className="text-primary-600 font-bold text-xl">M</span>
-                            </div>
-                            <span className="text-2xl font-bold text-white">MIKO GYM</span>
+                            <img src="/storage/logo/logo.jpg" alt="Bricks Gym" className="w-12 h-12 rounded-xl object-cover" />
+                            <span className="text-2xl font-bold text-white">Bricks Gym</span>
                         </div>
                     </div>
                     <div>
@@ -41,7 +39,7 @@ export default function Login() {
                         </p>
                     </div>
                     <div className="text-primary-200 text-sm">
-                        © 2024 MIKO GYM. All rights reserved.
+                        © 2024 Bricks Gym. All rights reserved.
                     </div>
                 </div>
 
@@ -62,10 +60,8 @@ export default function Login() {
                     <div className="w-full max-w-md">
                         {/* Mobile Logo */}
                         <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-                            <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
-                                <span className="text-white font-bold text-xl">M</span>
-                            </div>
-                            <span className="text-2xl font-bold text-gray-900 dark:text-white">MIKO GYM</span>
+                            <img src="/storage/logo/logo.jpg" alt="Bricks Gym" className="w-12 h-12 rounded-xl object-cover" />
+                            <span className="text-2xl font-bold text-gray-900 dark:text-white">Bricks Gym</span>
                         </div>
 
                         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">

@@ -107,6 +107,26 @@ export default function UnregisteredIndex({ unregistered }) {
                 )}
             </div>
 
+            {/* Pagination */}
+            {unregistered.links && unregistered.links.length > 3 && (
+                <div className="flex justify-center gap-1 mt-6">
+                    {unregistered.links.map((link, index) => (
+                        <Link
+                            key={index}
+                            href={link.url || '#'}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                link.active 
+                                    ? 'bg-primary-600 text-white' 
+                                    : link.url 
+                                        ? 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600' 
+                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                            }`}
+                            dangerouslySetInnerHTML={{ __html: link.label }}
+                        />
+                    ))}
+                </div>
+            )}
+
             <ConfirmModal isOpen={deleteModal.open} onClose={() => setDeleteModal({ open: false, id: null })} onConfirm={handleDelete} title="Hapus Data RFID" message="Apakah Anda yakin ingin menghapus data RFID ini?" />
         </AuthenticatedLayout>
     );

@@ -8,6 +8,7 @@ import {
     ArrowTrendingUpIcon,
     ClockIcon
 } from '@heroicons/react/24/outline';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Dashboard({ stats, chartData, recentAttendances }) {
     const maxCount = Math.max(...chartData.map(d => d.count), 1);
@@ -86,19 +87,48 @@ export default function Dashboard({ stats, chartData, recentAttendances }) {
                             Jumlah Hadir
                         </div>
                     </div>
-                    <div className="flex items-end justify-between h-52 gap-3">
-                        {chartData.map((item, index) => (
-                            <div key={index} className="flex flex-col items-center flex-1">
-                                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{item.count}</span>
-                                <div 
-                                    className="w-full bg-primary-600 rounded-t-lg transition-all hover:bg-primary-500"
-                                    style={{ 
-                                        height: `${Math.max((item.count / maxCount) * 100, 4)}%`,
-                                    }}
+                    <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                                <XAxis 
+                                    dataKey="date" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{ fill: '#9ca3af', fontSize: 12 }}
                                 />
-                                <span className="text-xs text-gray-500 dark:text-gray-400 mt-3 font-medium">{item.date}</span>
-                            </div>
-                        ))}
+                                <YAxis 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                                    allowDecimals={false}
+                                />
+                                <Tooltip 
+                                    contentStyle={{ 
+                                        backgroundColor: '#1f2937', 
+                                        border: 'none', 
+                                        borderRadius: '8px',
+                                        color: '#fff'
+                                    }}
+                                    labelStyle={{ color: '#9ca3af' }}
+                                    formatter={(value) => [`${value} orang`, 'Kehadiran']}
+                                />
+                                <Area 
+                                    type="monotone" 
+                                    dataKey="count" 
+                                    stroke="#6366f1" 
+                                    strokeWidth={3}
+                                    fillOpacity={1} 
+                                    fill="url(#colorCount)" 
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
 

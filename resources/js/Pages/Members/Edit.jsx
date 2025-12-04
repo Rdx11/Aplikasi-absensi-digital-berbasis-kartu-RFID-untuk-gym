@@ -5,20 +5,28 @@ import { useState } from 'react';
 export default function MembersEdit({ member, membershipTypes }) {
     const [dragActive, setDragActive] = useState(false);
     const [preview, setPreview] = useState(member.photo ? `/storage/${member.photo}` : null);
+
+    // Helper untuk format tanggal ke YYYY-MM-DD
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().split('T')[0];
+    };
     
     const { data, setData, post, processing, errors } = useForm({
         _method: 'PUT',
         rfid_uid: member.rfid_uid || '',
         name: member.name || '',
         phone: member.phone || '',
-        birth_date: member.birth_date || '',
+        birth_date: formatDateForInput(member.birth_date),
         gender: member.gender || '',
         address: member.address || '',
         membership_type_id: member.membership_type_id || '',
-        membership_start_date: member.membership_start_date || '',
-        membership_end_date: member.membership_end_date || '',
+        membership_start_date: formatDateForInput(member.membership_start_date),
+        membership_end_date: formatDateForInput(member.membership_end_date),
         status: member.status === 'active',
         photo: null,
+        remove_photo: false,
     });
 
     const handleDrag = (e) => {
@@ -176,7 +184,7 @@ export default function MembersEdit({ member, membershipTypes }) {
                             {preview ? (
                                 <div className="flex flex-col items-center">
                                     <img src={preview} alt="Preview" className="w-32 h-32 object-cover rounded-lg mb-3" />
-                                    <button type="button" onClick={() => { setPreview(null); setData('photo', null); }} className="text-sm text-red-600 hover:text-red-700">Hapus foto</button>
+                                    <button type="button" onClick={() => { setPreview(null); setData(data => ({ ...data, photo: null, remove_photo: true })); }} className="text-sm text-red-600 hover:text-red-700">Hapus foto</button>
                                 </div>
                             ) : (
                                 <>

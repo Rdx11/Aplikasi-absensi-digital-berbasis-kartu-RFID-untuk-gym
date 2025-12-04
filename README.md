@@ -1,32 +1,34 @@
-# MIKO GYM - Sistem Absensi Digital
+# Bricks Gym - Sistem Absensi Digital
 
 Aplikasi absensi digital berbasis kartu RFID untuk gym, dibangun dengan Laravel, React (Inertia.js), dan ESP32.
 
 ## Fitur
 
-- **Dashboard** - Statistik member, absensi hari ini, grafik kehadiran
+- **Dashboard** - Statistik member, absensi hari ini, grafik kehadiran 7 hari terakhir
 - **Manajemen Member** - CRUD member dengan foto dan data keanggotaan
-- **Jenis Keanggotaan** - Kelola paket membership (harian, bulanan, dll)
-- **Absensi** - Check-in/check-out otomatis via RFID
+- **Jenis Keanggotaan** - Kelola paket membership (harian, bulanan, 6 bulan, tahunan)
+- **Absensi Real-time** - Check-in otomatis via RFID dengan popup foto member
 - **RFID Belum Terdaftar** - Daftar kartu baru yang belum terdaftar
-- **Rekap** - Laporan kehadiran dengan filter tanggal
+- **Rekap & Export** - Laporan kehadiran dengan filter tanggal dan export Excel
+- **Auto Expired** - Status member otomatis berubah jika membership habis
 - **Dark Mode** - Tema gelap/terang
+- **Pagination** - Semua tabel dengan pagination
 
 ## Requirements
 
 - PHP >= 8.2
 - Composer
 - Node.js >= 18
-- MySQL / MariaDB / SQLite
-- ESP32 DevKit V1 + RFID Reader (untuk hardware)
+- MySQL / MariaDB
+- ESP32 DevKit V1 + MFRC522 RFID Reader + LCD I2C 16x2
 
 ## Instalasi
 
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/username/gym-miko.git
-cd gym-miko
+git clone https://github.com/username/bricks-gym.git
+cd bricks-gym
 ```
 
 ### 2. Install Dependencies
@@ -46,10 +48,13 @@ php artisan key:generate
 Edit file `.env` dan sesuaikan konfigurasi database:
 
 ```env
+APP_NAME="Bricks Gym"
+APP_URL=http://localhost:8000
+
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=gym_miko
+DB_DATABASE=bricks_gym
 DB_USERNAME=root
 DB_PASSWORD=
 ```
@@ -74,14 +79,9 @@ npm run build
 
 ### 7. Jalankan Aplikasi
 
+Untuk development:
 ```bash
-composer dev
-```
-
-Atau jalankan secara terpisah:
-
-```bash
-php artisan serve
+php artisan serve --host=0.0.0.0 --port=8000
 npm run dev
 ```
 
@@ -89,10 +89,56 @@ Buka browser: `http://localhost:8000`
 
 ## Login Default
 
-- **Email:** admin@mikogym.com
+- **Email:** admin@bricksgym.com
 - **Password:** password
 
-## API Endpoint untuk ESP32
+## Konfigurasi ESP32
+
+### Wiring MFRC522 ke ESP32
+
+| MFRC522 | ESP32 |
+|---------|-------|
+| SDA     | GPIO 5 |
+| SCK     | GPIO 18 |
+| MOSI    | GPIO 23 |
+| MISO    | GPIO 19 |
+| RST     | GPIO 22 |
+| 3.3V    | 3.3V |
+| GND     | GND |
+
+### Wiring LCD I2C
+
+| LCD I2C | ESP32 |
+|---------|-------|
+| SDA     | GPIO 16 |
+| SCL     | GPIO 17 |
+| VCC     | 5V |
+| GND     | GND |
+
+### Buzzer
+- Positif → GPIO 14
+- Negatif → GND
+
+### Konfigurasi di Kode ESP32
+
+Edit file `esp32/rfid_scanner.ino`:
+
+```cpp
+// WiFi
+const char* ssid = "NAMA_WIFI_ANDA";
+const char* password = "PASSWORD_WIFI_ANDA";
+
+// Server (ganti dengan IP komputer)
+String serverName = "http://192.168.1.xxx:8000/api/rfid/scan";
+```
+
+### Library yang Dibutuhkan (Arduino IDE)
+
+- MFRC522 by GithubCommunity
+- ArduinoJson by Benoit Blanchon
+- LiquidCrystal_I2C
+
+## API Endpoint
 
 ### Scan RFID
 
@@ -113,9 +159,11 @@ Content-Type: application/json
     "type": "check_in",
     "member": {
         "name": "John Doe",
-        "photo": "members/photo.jpg"
+        "photo": "members/photo.jpg",
+        "membership_type": "Gold"
     },
-    "time": "08:30:00"
+    "time": "08:30:00",
+    "today_count": 1
 }
 ```
 
@@ -127,20 +175,28 @@ Content-Type: application/json
 }
 ```
 
-## Struktur Database
+## Scheduled Tasks
 
-- `users` - Admin aplikasi
-- `members` - Data member gym
-- `membership_types` - Jenis keanggotaan
-- `attendances` - Log absensi
-- `unregistered_rfids` - Kartu RFID belum terdaftar
+Untuk menjalankan auto-check expired members, tambahkan cron job:
+
+```bash
+* * * * * cd /path-to-project && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Atau jalankan manual:
+```bash
+php artisan members:check-expired
+```
 
 ## Tech Stack
 
 - **Backend:** Laravel 12, Laravel Fortify
 - **Frontend:** React 18, Inertia.js, Tailwind CSS 4
+- **Charts:** Recharts
 - **Icons:** Heroicons
 - **Notifications:** React Hot Toast
+- **Export:** Maatwebsite Excel
+- **Hardware:** ESP32 DevKit V1, MFRC522, LCD I2C 16x2
 
 ## License
 
