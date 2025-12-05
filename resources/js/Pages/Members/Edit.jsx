@@ -1,10 +1,12 @@
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import { useState } from 'react';
+import { compressImage } from '../../Utils/imageCompressor';
 
 export default function MembersEdit({ member, membershipTypes }) {
     const [dragActive, setDragActive] = useState(false);
     const [preview, setPreview] = useState(member.photo ? `/storage/${member.photo}` : null);
+    const [compressing, setCompressing] = useState(false);
 
     // Helper untuk format tanggal ke YYYY-MM-DD
     const formatDateForInput = (dateString) => {
@@ -48,12 +50,31 @@ export default function MembersEdit({ member, membershipTypes }) {
         }
     };
 
-    const handleFile = (file) => {
+    const handleFile = async (file) => {
         if (file && file.type.startsWith('image/')) {
-            setData('photo', file);
-            const reader = new FileReader();
-            reader.onloadend = () => setPreview(reader.result);
-            reader.readAsDataURL(file);
+            setCompressing(true);
+            try {
+                // Compress image sebelum upload (max 800px, quality 80%, max 1MB)
+                const compressedFile = await compressImage(file, {
+                    maxWidth: 800,
+                    maxHeight: 800,
+                    quality: 0.8,
+                    maxSizeMB: 1
+                });
+                setData('photo', compressedFile);
+                const reader = new FileReader();
+                reader.onloadend = () => setPreview(reader.result);
+                reader.readAsDataURL(compressedFile);
+            } catch (error) {
+                console.error('Error compressing image:', error);
+                // Fallback ke file asli jika compress gagal
+                setData('photo', file);
+                const reader = new FileReader();
+                reader.onloadend = () => setPreview(reader.result);
+                reader.readAsDataURL(file);
+            } finally {
+                setCompressing(false);
+            }
         }
     };
 
@@ -181,7 +202,15 @@ export default function MembersEdit({ member, membershipTypes }) {
                             onDrop={handleDrop}
                             className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-300 dark:border-gray-600'}`}
                         >
-                            {preview ? (
+                            {compressing ? (
+                                <div className="flex flex-col items-center">
+                                    <svg className="animate-spin w-8 h-8 text-primary-600 mb-3" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                    </svg>
+                                    <p className="text-gray-500 dark:text-gray-400">Mengompresi gambar...</p>
+                                </div>
+                            ) : preview ? (
                                 <div className="flex flex-col items-center">
                                     <img src={preview} alt="Preview" className="w-32 h-32 object-cover rounded-lg mb-3" />
                                     <button type="button" onClick={() => { setPreview(null); setData(data => ({ ...data, photo: null, remove_photo: true })); }} className="text-sm text-red-600 hover:text-red-700">Hapus foto</button>
