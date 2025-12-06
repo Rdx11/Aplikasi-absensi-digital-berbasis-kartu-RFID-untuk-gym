@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
-import { CalendarDaysIcon, UsersIcon, ChartBarIcon, ArrowTrendingUpIcon, FunnelIcon, ArrowDownTrayIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, UsersIcon, ChartBarIcon, ArrowTrendingUpIcon, FunnelIcon, ArrowDownTrayIcon, UserGroupIcon, ClipboardDocumentListIcon, CurrencyDollarIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 
 export default function ReportsIndex({ stats, memberStats, nonMemberStats, members, filters }) {
     const [dateFrom, setDateFrom] = useState(filters.date_from);
@@ -32,9 +32,35 @@ export default function ReportsIndex({ stats, memberStats, nonMemberStats, membe
 
     const inputClass = "pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500";
 
+    const reportTabs = [
+        { name: 'Rekap Absensi', href: '/reports', icon: ClipboardDocumentListIcon, current: true },
+        { name: 'Laporan Member', href: '/reports/members', icon: UsersIcon, current: false },
+        { name: 'Rekap Pendapatan', href: '/reports/income', icon: BanknotesIcon, current: false },
+    ];
+
     return (
         <AuthenticatedLayout title="Rekap Absensi">
             <Head title="Rekap" />
+
+            {/* Report Navigation Tabs */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-2 mb-6">
+                <nav className="flex space-x-2">
+                    {reportTabs.map((tab) => (
+                        <Link
+                            key={tab.name}
+                            href={tab.href}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                                tab.current
+                                    ? 'bg-primary-600 text-white'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            }`}
+                        >
+                            <tab.icon className="w-5 h-5" />
+                            {tab.name}
+                        </Link>
+                    ))}
+                </nav>
+            </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-6">
                 <div className="flex items-center gap-2 mb-4">

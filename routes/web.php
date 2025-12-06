@@ -6,6 +6,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MembershipTypeController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\MemberReportController;
+use App\Http\Controllers\IncomeReportController;
 use App\Http\Controllers\UnregisteredRfidController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,4 +40,8 @@ Route::middleware(['auth'])->group(function () {
     // Reports
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
+    Route::get('/reports/members', [MemberReportController::class, 'index'])->name('reports.members');
+    Route::get('/reports/members/export', [MemberReportController::class, 'export'])->name('reports.members.export');
+    Route::get('/reports/income', [IncomeReportController::class, 'index'])->name('reports.income');
+    Route::get('/reports/income/export', [IncomeReportController::class, 'export'])->name('reports.income.export');
 });
