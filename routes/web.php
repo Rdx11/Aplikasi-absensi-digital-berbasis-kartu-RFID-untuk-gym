@@ -21,6 +21,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Members
     Route::resource('members', MemberController::class);
+    Route::post('/members/{member}/renew', [MemberController::class, 'renew'])->name('members.renew');
 
     // Membership Types
     Route::resource('membership-types', MembershipTypeController::class)->except(['show']);

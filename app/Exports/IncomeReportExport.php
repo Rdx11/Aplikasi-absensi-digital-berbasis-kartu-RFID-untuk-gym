@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\Attendance;
 use App\Models\Member;
+use App\Models\MemberRenewal;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -41,6 +42,20 @@ class IncomeReportExport implements FromCollection, WithHeadings, WithMapping, W
                 ];
             });
 
+        // Get renewal income
+        $renewalIncome = MemberRenewal::with(['member', 'membershipType'])
+            ->whereBetween('created_at', [$this->dateFrom . ' 00:00:00', $this->dateTo . ' 23:59:59'])
+            ->get()
+            ->map(function ($renewal) {
+                return [
+                    'date' => $renewal->created_at->format('Y-m-d'),
+                    'type' => 'Perpanjangan',
+                    'description' => 'Perpanjang: ' . ($renewal->member->name ?? '-'),
+                    'package' => $renewal->membershipType->name ?? '-',
+                    'amount' => $renewal->price ?? 0,
+                ];
+            });
+
         // Get daily package income
         $dailyPackageIncome = Attendance::with('dailyPackage')
             ->where('is_member', false)
@@ -58,7 +73,7 @@ class IncomeReportExport implements FromCollection, WithHeadings, WithMapping, W
             });
 
         // Merge and sort by date
-        return $membershipIncome->concat($dailyPackageIncome)->sortBy('date')->values();
+        return $membershipIncome->concat($renewalIncome)->concat($dailyPackageIncome)->sortBy('date')->values();
     }
 
     public function headings(): array

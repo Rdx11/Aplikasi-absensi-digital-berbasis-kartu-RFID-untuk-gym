@@ -150,4 +150,39 @@ class MemberController extends Controller
 
         return redirect()->route('members.index')->with('success', 'Member berhasil dihapus');
     }
+
+    public function renew(Request $request, Member $member)
+    {
+        $validated = $request->validate([
+            'membership_type_id' => 'required|exists:membership_types,id',
+            'notes' => 'nullable|string',
+        ]);
+
+        $membershipType = MembershipType::findOrFail($validated['membership_type_id']);
+        
+        $oldEndDate = $member->membership_end_date;
+        $newStartDate = today();
+        $newEndDate = today()->addDays($membershipType->duration_days);
+
+        // Simpan data perpanjangan
+        \App\Models\MemberRenewal::create([
+            'member_id' => $member->id,
+            'membership_type_id' => $membershipType->id,
+            'old_end_date' => $oldEndDate,
+            'new_start_date' => $newStartDate,
+            'new_end_date' => $newEndDate,
+            'price' => $membershipType->price,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        // Update member
+        $member->update([
+            'membership_type_id' => $membershipType->id,
+            'membership_start_date' => $newStartDate,
+            'membership_end_date' => $newEndDate,
+            'status' => 'active',
+        ]);
+
+        return redirect()->route('members.index')->with('success', 'Member berhasil diperpanjang');
+    }
 }

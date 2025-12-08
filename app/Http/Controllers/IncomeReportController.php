@@ -6,6 +6,7 @@ use App\Exports\IncomeReportExport;
 use App\Models\Attendance;
 use App\Models\DailyPackage;
 use App\Models\Member;
+use App\Models\MemberRenewal;
 use App\Models\MembershipType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,12 @@ class IncomeReportController extends Controller
         $totalMembershipIncome = $membershipIncome->sum(function ($member) {
             return $member->membershipType?->price ?? 0;
         });
+
+        // Income from renewals
+        $renewalIncome = MemberRenewal::whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
+            ->sum('price');
+
+        $totalMembershipIncome += $renewalIncome;
 
         // Income by membership type
         $incomeByMembershipType = MembershipType::select('membership_types.*')
@@ -88,11 +95,14 @@ class IncomeReportController extends Controller
         while ($currentDate <= $endDate) {
             $date = $currentDate->format('Y-m-d');
             
-            // Membership income for this day
+            // Membership income for this day (new members + renewals)
             $dayMembershipIncome = Member::with('membershipType')
                 ->whereDate('created_at', $date)
                 ->get()
                 ->sum(fn($m) => $m->membershipType?->price ?? 0);
+
+            // Add renewal income for this day
+            $dayMembershipIncome += MemberRenewal::whereDate('created_at', $date)->sum('price');
 
             // Daily package income for this day
             $dayPackageIncome = Attendance::with('dailyPackage')
@@ -114,12 +124,16 @@ class IncomeReportController extends Controller
 
         $totalIncome = $totalMembershipIncome + $totalDailyPackageIncome;
 
+        // Count renewals
+        $renewalsCount = MemberRenewal::whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])->count();
+
         return Inertia::render('Reports/Income', [
             'stats' => [
                 'totalIncome' => $totalIncome,
                 'membershipIncome' => $totalMembershipIncome,
                 'dailyPackageIncome' => $totalDailyPackageIncome,
                 'newMembersCount' => $membershipIncome->count(),
+                'renewalsCount' => $renewalsCount,
                 'dailyVisitsCount' => $dailyPackageIncome->count(),
             ],
             'incomeByMembershipType' => $incomeByMembershipType,

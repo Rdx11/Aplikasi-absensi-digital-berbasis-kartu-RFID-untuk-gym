@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { 
     MagnifyingGlassIcon, 
@@ -7,13 +7,21 @@ import {
     PencilSquareIcon, 
     TrashIcon,
     UsersIcon,
-    FunnelIcon
+    FunnelIcon,
+    ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import ConfirmModal from '../../Components/ConfirmModal';
+import Modal from '../../Components/Modal';
 
 export default function MembersIndex({ members, membershipTypes, filters }) {
     const [search, setSearch] = useState(filters.search || '');
     const [deleteModal, setDeleteModal] = useState({ open: false, id: null, name: '' });
+    const [renewModal, setRenewModal] = useState({ open: false, member: null });
+    
+    const renewForm = useForm({
+        membership_type_id: '',
+        notes: '',
+    });
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -28,6 +36,32 @@ export default function MembersIndex({ members, membershipTypes, filters }) {
         router.delete(`/members/${deleteModal.id}`, {
             onSuccess: () => setDeleteModal({ open: false, id: null, name: '' }),
         });
+    };
+
+    const openRenewModal = (member) => {
+        renewForm.setData({
+            membership_type_id: member.membership_type_id || '',
+            notes: '',
+        });
+        setRenewModal({ open: true, member });
+    };
+
+    const handleRenew = (e) => {
+        e.preventDefault();
+        renewForm.post(`/members/${renewModal.member.id}/renew`, {
+            onSuccess: () => {
+                setRenewModal({ open: false, member: null });
+                renewForm.reset();
+            },
+        });
+    };
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+        }).format(amount);
     };
 
     const statusStyles = {
@@ -138,6 +172,15 @@ export default function MembersIndex({ members, membershipTypes, filters }) {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center justify-end gap-2">
+                                            {(member.status === 'expired' || member.status === 'inactive') && (
+                                                <button
+                                                    onClick={() => openRenewModal(member)}
+                                                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+                                                    title="Perpanjang Member"
+                                                >
+                                                    <ArrowPathIcon className="w-5 h-5" />
+                                                </button>
+                                            )}
                                             <Link
                                                 href={`/members/${member.id}/edit`}
                                                 className="p-2 text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
@@ -194,6 +237,91 @@ export default function MembersIndex({ members, membershipTypes, filters }) {
                 title="Hapus Member"
                 message={`Apakah Anda yakin ingin menghapus member "${deleteModal.name}"? Tindakan ini tidak dapat dibatalkan.`}
             />
+
+            {/* Renew Modal */}
+            <Modal
+                isOpen={renewModal.open}
+                onClose={() => setRenewModal({ open: false, member: null })}
+                title="Perpanjang Member"
+            >
+                {renewModal.member && (
+                    <form onSubmit={handleRenew} className="space-y-4">
+                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-4">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Member</p>
+                            <p className="font-semibold text-gray-900 dark:text-white">{renewModal.member.name}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Status Saat Ini</p>
+                            <p className="text-sm">
+                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusStyles[renewModal.member.status]}`}>
+                                    {statusLabels[renewModal.member.status]}
+                                </span>
+                                {renewModal.member.membership_end_date && (
+                                    <span className="ml-2 text-gray-500 dark:text-gray-400">
+                                        (Expired: {formatDate(renewModal.member.membership_end_date)})
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Pilih Jenis Membership <span className="text-red-500">*</span>
+                            </label>
+                            <select
+                                value={renewForm.data.membership_type_id}
+                                onChange={(e) => renewForm.setData('membership_type_id', e.target.value)}
+                                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                required
+                            >
+                                <option value="">-- Pilih Jenis --</option>
+                                {membershipTypes.map((type) => (
+                                    <option key={type.id} value={type.id}>
+                                        {type.name} - {formatCurrency(type.price)} ({type.duration_days} hari)
+                                    </option>
+                                ))}
+                            </select>
+                            {renewForm.errors.membership_type_id && (
+                                <p className="text-red-500 text-sm mt-1">{renewForm.errors.membership_type_id}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Catatan (Opsional)
+                            </label>
+                            <textarea
+                                value={renewForm.data.notes}
+                                onChange={(e) => renewForm.setData('notes', e.target.value)}
+                                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                                rows="2"
+                                placeholder="Catatan perpanjangan..."
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <button
+                                type="button"
+                                onClick={() => setRenewModal({ open: false, member: null })}
+                                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={renewForm.processing}
+                                className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {renewForm.processing && (
+                                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                    </svg>
+                                )}
+                                Perpanjang
+                            </button>
+                        </div>
+                    </form>
+                )}
+            </Modal>
         </AuthenticatedLayout>
     );
 }

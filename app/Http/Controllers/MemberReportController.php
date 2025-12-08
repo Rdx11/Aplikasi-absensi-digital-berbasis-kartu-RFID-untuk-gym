@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\MemberReportExport;
 use App\Models\Member;
+use App\Models\MemberRenewal;
 use App\Models\MembershipType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -30,6 +31,9 @@ class MemberReportController extends Controller
         $expiringSoon = Member::where('status', 'active')
             ->whereBetween('membership_end_date', [today(), today()->addDays(7)])
             ->count();
+
+        // Renewals in date range
+        $renewalsCount = MemberRenewal::whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])->count();
 
         // Members by membership type
         $membersByType = MembershipType::withCount(['members', 'members as active_members_count' => function ($q) {
@@ -77,6 +81,7 @@ class MemberReportController extends Controller
                 'expiredMembers' => $expiredMembers,
                 'inactiveMembers' => $inactiveMembers,
                 'newMembers' => $newMembers,
+                'renewalsCount' => $renewalsCount,
                 'expiringSoon' => $expiringSoon,
             ],
             'membersByType' => $membersByType,
