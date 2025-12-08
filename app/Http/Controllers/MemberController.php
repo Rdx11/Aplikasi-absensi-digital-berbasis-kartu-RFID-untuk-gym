@@ -164,6 +164,9 @@ class MemberController extends Controller
         $newStartDate = today();
         $newEndDate = today()->addDays($membershipType->duration_days);
 
+        // Gunakan renewal_price jika ada, jika tidak gunakan price
+        $renewalPrice = $membershipType->renewal_price ?? $membershipType->price;
+
         // Simpan data perpanjangan
         \App\Models\MemberRenewal::create([
             'member_id' => $member->id,
@@ -171,7 +174,7 @@ class MemberController extends Controller
             'old_end_date' => $oldEndDate,
             'new_start_date' => $newStartDate,
             'new_end_date' => $newEndDate,
-            'price' => $membershipType->price,
+            'price' => $renewalPrice,
             'notes' => $validated['notes'] ?? null,
         ]);
 

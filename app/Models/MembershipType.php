@@ -12,12 +12,14 @@ class MembershipType extends Model
         'duration_type',
         'duration_days',
         'price',
+        'renewal_price',
         'description',
         'is_active',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'renewal_price' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 

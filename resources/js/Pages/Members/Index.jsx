@@ -275,7 +275,7 @@ export default function MembersIndex({ members, membershipTypes, filters }) {
                                 <option value="">-- Pilih Jenis --</option>
                                 {membershipTypes.map((type) => (
                                     <option key={type.id} value={type.id}>
-                                        {type.name} - {formatCurrency(type.price)} ({type.duration_days} hari)
+                                        {type.name} - {formatCurrency(type.renewal_price || type.price)} ({type.duration_days} hari)
                                     </option>
                                 ))}
                             </select>

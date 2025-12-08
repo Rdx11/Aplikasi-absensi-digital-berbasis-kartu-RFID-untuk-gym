@@ -31,6 +31,7 @@ class MembershipTypeController extends Controller
             'duration_type' => 'required|in:daily,monthly,6_months,yearly',
             'duration_days' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
+            'renewal_price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -55,6 +56,7 @@ class MembershipTypeController extends Controller
             'duration_type' => 'required|in:daily,monthly,6_months,yearly',
             'duration_days' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
+            'renewal_price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);

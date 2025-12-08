@@ -8,6 +8,7 @@ export default function MembershipTypesEdit({ membershipType }) {
         duration_type: membershipType.duration_type || 'monthly',
         duration_days: membershipType.duration_days || 30,
         price: membershipType.price || 0,
+        renewal_price: membershipType.renewal_price || 0,
         description: membershipType.description || '',
         is_active: membershipType.is_active ?? true,
     });
@@ -70,15 +71,27 @@ export default function MembershipTypesEdit({ membershipType }) {
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Harga <span className="text-red-500">*</span>
-                            </label>
-                            <div className="relative">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">Rp</span>
-                                <input type="number" value={data.price} onChange={(e) => setData('price', parseFloat(e.target.value))} className={`${inputClass} pl-12`} min="0" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Harga Member Baru <span className="text-red-500">*</span>
+                                </label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">Rp</span>
+                                    <input type="number" value={data.price} onChange={(e) => setData('price', parseFloat(e.target.value))} className={`${inputClass} pl-12`} min="0" />
+                                </div>
+                                {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
                             </div>
-                            {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Harga Perpanjangan <span className="text-red-500">*</span>
+                                </label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">Rp</span>
+                                    <input type="number" value={data.renewal_price} onChange={(e) => setData('renewal_price', parseFloat(e.target.value))} className={`${inputClass} pl-12`} min="0" />
+                                </div>
+                                {errors.renewal_price && <p className="text-red-500 text-sm mt-1">{errors.renewal_price}</p>}
+                            </div>
                         </div>
 
                         <div>
