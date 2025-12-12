@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '../../Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { compressImage } from '../../Utils/imageCompressor';
 
 export default function MembersCreate({ membershipTypes, rfidUid }) {
@@ -86,8 +86,22 @@ export default function MembersCreate({ membershipTypes, rfidUid }) {
         }
     };
 
+    const [dateError, setDateError] = useState('');
+
+    // Validasi tanggal
+    useEffect(() => {
+        if (data.membership_start_date && data.membership_end_date) {
+            if (new Date(data.membership_start_date) > new Date(data.membership_end_date)) {
+                setDateError('Tanggal mulai keanggotaan tidak boleh lebih dari tanggal akhir keanggotaan');
+            } else {
+                setDateError('');
+            }
+        }
+    }, [data.membership_start_date, data.membership_end_date]);
+
     const submit = (e) => {
         e.preventDefault();
+        if (dateError) return;
         post('/members');
     };
 
@@ -199,6 +213,7 @@ export default function MembersCreate({ membershipTypes, rfidUid }) {
                                     Berakhir Keanggotaan<span className="text-red-500">*</span>
                                 </label>
                                 <input type="date" value={data.membership_end_date} onChange={(e) => setData('membership_end_date', e.target.value)} className={inputClass} />
+                                {dateError && <p className="text-red-500 text-sm mt-1">{dateError}</p>}
                             </div>
                             <div className="flex items-center gap-3 pt-6">
                                 <button
