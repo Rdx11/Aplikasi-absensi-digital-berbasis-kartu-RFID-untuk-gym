@@ -195,13 +195,13 @@ Content-Type: application/json
 ## Struktur Database
 
 ### Tabel Utama
-- `users` - Data admin/user login (PK: id_user)
-- `members` - Data member gym (PK: id_member)
-- `membership_types` - Jenis keanggotaan/harga/durasi (PK: id_membership_type)
-- `member_renewals` - History perpanjangan member (PK: id_member_renewal)
-- `attendances` - Data absensi (PK: id_attendance)
-- `daily_packages` - Paket harian untuk non-member (PK: id_daily_package)
-- `unregistered_rfids` - RFID yang belum terdaftar (PK: id_unregistered_rfid)
+- `users` - Data admin/user login
+- `members` - Data member gym
+- `membership_types` - Jenis keanggotaan (harga, durasi)
+- `member_renewals` - History perpanjangan member
+- `attendances` - Data absensi
+- `daily_packages` - Paket harian untuk non-member
+- `unregistered_rfids` - RFID yang belum terdaftar
 
 ### Field Size yang Dioptimasi
 | Field | Size | Keterangan |
