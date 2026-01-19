@@ -7,6 +7,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MembershipType extends Model
 {
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
+
     protected $fillable = [
         'name',
         'duration_type',
@@ -25,6 +33,11 @@ class MembershipType extends Model
 
     public function members(): HasMany
     {
-        return $this->hasMany(Member::class);
+        return $this->hasMany(Member::class, 'membership_type_id', 'id');
+    }
+
+    public function renewals(): HasMany
+    {
+        return $this->hasMany(MemberRenewal::class, 'membership_type_id', 'id');
     }
 }

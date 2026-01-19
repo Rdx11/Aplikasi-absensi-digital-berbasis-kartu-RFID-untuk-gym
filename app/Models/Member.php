@@ -8,6 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Member extends Model
 {
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
+
     protected $fillable = [
         'rfid_uid',
         'name',
@@ -31,11 +39,16 @@ class Member extends Model
 
     public function membershipType(): BelongsTo
     {
-        return $this->belongsTo(MembershipType::class);
+        return $this->belongsTo(MembershipType::class, 'membership_type_id', 'id');
     }
 
     public function attendances(): HasMany
     {
-        return $this->hasMany(Attendance::class);
+        return $this->hasMany(Attendance::class, 'member_id', 'id');
+    }
+
+    public function renewals(): HasMany
+    {
+        return $this->hasMany(MemberRenewal::class, 'member_id', 'id');
     }
 }

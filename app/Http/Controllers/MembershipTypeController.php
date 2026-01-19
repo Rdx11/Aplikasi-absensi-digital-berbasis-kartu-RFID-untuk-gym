@@ -27,7 +27,7 @@ class MembershipTypeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:50',
             'duration_type' => 'required|in:daily,monthly,6_months,yearly',
             'duration_days' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
@@ -52,7 +52,7 @@ class MembershipTypeController extends Controller
     public function update(Request $request, MembershipType $membershipType)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:50',
             'duration_type' => 'required|in:daily,monthly,6_months,yearly',
             'duration_days' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',

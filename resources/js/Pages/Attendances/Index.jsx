@@ -11,18 +11,21 @@ export default function AttendancesIndex({ attendances, members, dailyPackages, 
     const [showModal, setShowModal] = useState(false);
     const [showManualModal, setShowManualModal] = useState(false);
     const [latestMember, setLatestMember] = useState(null);
+    const [isMemberAttendance, setIsMemberAttendance] = useState(false);
     const intervalRef = useRef(null);
     const lastAttendanceIdRef = useRef(null);
     const isToday = date === new Date().toISOString().split('T')[0];
 
     const { data, setData, post, processing, errors, reset } = useForm({
+        is_member: false,
+        member_id: '',
         guest_name: '',
         daily_package_id: '',
     });
 
     useEffect(() => {
         if (attendances.data?.length > 0) {
-            lastAttendanceIdRef.current = attendances.data[0].id;
+            lastAttendanceIdRef.current = attendances.data[0].id_attendance;
         }
     }, []);
 
@@ -35,7 +38,7 @@ export default function AttendancesIndex({ attendances, members, dailyPackages, 
                     onSuccess: (page) => {
                         const newAttendances = page.props.attendances.data;
                         if (newAttendances?.length > 0) {
-                            const newestId = newAttendances[0].id;
+                            const newestId = newAttendances[0].id_attendance;
                             if (lastAttendanceIdRef.current && newestId !== lastAttendanceIdRef.current) {
                                 const attendance = newAttendances[0];
                                 if (attendance.is_member && attendance.member) {
@@ -81,6 +84,7 @@ export default function AttendancesIndex({ attendances, members, dailyPackages, 
         post('/attendances/manual', {
             onSuccess: () => {
                 setShowManualModal(false);
+                setIsMemberAttendance(false);
                 reset();
             }
         });
@@ -218,43 +222,110 @@ export default function AttendancesIndex({ attendances, members, dailyPackages, 
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
                     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Absensi Manual (Non-Member)</h3>
-                            <button onClick={() => { setShowManualModal(false); reset(); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Absensi Manual</h3>
+                            <button onClick={() => { setShowManualModal(false); setIsMemberAttendance(false); reset(); }} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                                 <XMarkIcon className="w-6 h-6" />
                             </button>
                         </div>
                         <form onSubmit={submitManual} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                    Nama Lengkap<span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={data.guest_name}
-                                    onChange={(e) => setData('guest_name', e.target.value)}
-                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    placeholder="Masukkan nama lengkap"
-                                />
-                                {errors.guest_name && <p className="text-red-500 text-sm mt-1">{errors.guest_name}</p>}
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                                    Paket Harian<span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={data.daily_package_id}
-                                    onChange={(e) => setData('daily_package_id', e.target.value)}
-                                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            {/* Toggle Member/Non-Member */}
+                            <div className="flex gap-3 mb-6">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsMemberAttendance(false);
+                                        setData({
+                                            is_member: false,
+                                            member_id: '',
+                                            guest_name: '',
+                                            daily_package_id: '',
+                                        });
+                                    }}
+                                    className={`flex-1 py-2.5 rounded-lg font-medium transition-colors ${
+                                        !isMemberAttendance
+                                            ? 'bg-primary-600 text-white'
+                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    }`}
                                 >
-                                    <option value="">Pilih paket harian</option>
-                                    {dailyPackages?.map((pkg) => (
-                                        <option key={pkg.id} value={pkg.id}>
-                                            {pkg.name} - Rp {Number(pkg.price).toLocaleString('id-ID')}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.daily_package_id && <p className="text-red-500 text-sm mt-1">{errors.daily_package_id}</p>}
+                                    Non-Member
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsMemberAttendance(true);
+                                        setData({
+                                            is_member: true,
+                                            member_id: '',
+                                            guest_name: '',
+                                            daily_package_id: '',
+                                        });
+                                    }}
+                                    className={`flex-1 py-2.5 rounded-lg font-medium transition-colors ${
+                                        isMemberAttendance
+                                            ? 'bg-primary-600 text-white'
+                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    }`}
+                                >
+                                    Member
+                                </button>
                             </div>
+
+                            {/* Member Form */}
+                            {isMemberAttendance ? (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                        Pilih Member<span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={data.member_id}
+                                        onChange={(e) => setData('member_id', e.target.value)}
+                                        className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                    >
+                                        <option value="">Cari member...</option>
+                                        {members?.map((member) => (
+                                            <option key={member.id} value={member.id}>
+                                                {member.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {errors.member_id && <p className="text-red-500 text-sm mt-1">{errors.member_id}</p>}
+                                </div>
+                            ) : (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                            Nama Lengkap<span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={data.guest_name}
+                                            onChange={(e) => setData('guest_name', e.target.value)}
+                                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                            placeholder="Masukkan nama lengkap"
+                                        />
+                                        {errors.guest_name && <p className="text-red-500 text-sm mt-1">{errors.guest_name}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                            Paket Harian<span className="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            value={data.daily_package_id}
+                                            onChange={(e) => setData('daily_package_id', e.target.value)}
+                                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        >
+                                            <option value="">Pilih paket harian</option>
+                                            {dailyPackages?.map((pkg) => (
+                                                <option key={pkg.id} value={pkg.id}>
+                                                    {pkg.name} - Rp {Number(pkg.price).toLocaleString('id-ID')}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {errors.daily_package_id && <p className="text-red-500 text-sm mt-1">{errors.daily_package_id}</p>}
+                                    </div>
+                                </>
+                            )}
+
                             <div className="flex gap-3 pt-2">
                                 <button
                                     type="submit"
@@ -265,7 +336,7 @@ export default function AttendancesIndex({ attendances, members, dailyPackages, 
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => { setShowManualModal(false); reset(); }}
+                                    onClick={() => { setShowManualModal(false); setIsMemberAttendance(false); reset(); }}
                                     className="px-4 py-2.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
                                 >
                                     Batal

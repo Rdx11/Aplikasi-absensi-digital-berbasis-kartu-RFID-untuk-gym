@@ -4,13 +4,30 @@ Aplikasi absensi digital berbasis kartu RFID untuk gym, dibangun dengan Laravel,
 
 ## Fitur
 
-- **Dashboard** - Statistik member, absensi hari ini, grafik kehadiran 7 hari terakhir
-- **Manajemen Member** - CRUD member dengan foto dan data keanggotaan
-- **Jenis Keanggotaan** - Kelola paket membership (harian, bulanan, 6 bulan, tahunan)
-- **Absensi Real-time** - Check-in otomatis via RFID dengan popup foto member
-- **RFID Belum Terdaftar** - Daftar kartu baru yang belum terdaftar
-- **Rekap & Export** - Laporan kehadiran dengan filter tanggal dan export Excel
+### Manajemen Member
+- **CRUD Member** - Kelola data member dengan foto dan informasi keanggotaan
+- **Perpanjang Member** - Perpanjang membership dengan pilihan jenis baru
 - **Auto Expired** - Status member otomatis berubah jika membership habis
+- **Validasi Tanggal** - Validasi tanggal mulai tidak boleh lebih dari tanggal akhir
+
+### Jenis Keanggotaan
+- **CRUD Jenis Membership** - Kelola paket (harian, bulanan, 6 bulan, tahunan)
+- **Harga Berbeda** - Harga member baru dan harga perpanjangan terpisah
+- **Durasi Otomatis** - Tanggal akhir dihitung otomatis berdasarkan durasi
+
+### Absensi
+- **Check-in Real-time** - Absensi otomatis via RFID dengan popup foto member
+- **Paket Harian** - Absensi non-member dengan paket harian
+- **RFID Belum Terdaftar** - Daftar kartu baru yang belum terdaftar
+
+### Laporan & Rekap
+- **Rekap Absensi** - Laporan kehadiran member dan non-member
+- **Laporan Member** - Statistik member (baru, aktif, expired, segera expired)
+- **Rekap Pendapatan** - Pendapatan dari membership baru, perpanjangan, dan paket harian
+- **Export Excel** - Export semua laporan ke Excel
+
+### Lainnya
+- **Dashboard** - Statistik member, absensi hari ini, grafik kehadiran 7 hari
 - **Dark Mode** - Tema gelap/terang
 - **Pagination** - Semua tabel dengan pagination
 
@@ -174,6 +191,28 @@ Content-Type: application/json
     "message": "RFID belum terdaftar"
 }
 ```
+
+## Struktur Database
+
+### Tabel Utama
+- `users` - Data admin/user login (PK: id_user)
+- `members` - Data member gym (PK: id_member)
+- `membership_types` - Jenis keanggotaan/harga/durasi (PK: id_membership_type)
+- `member_renewals` - History perpanjangan member (PK: id_member_renewal)
+- `attendances` - Data absensi (PK: id_attendance)
+- `daily_packages` - Paket harian untuk non-member (PK: id_daily_package)
+- `unregistered_rfids` - RFID yang belum terdaftar (PK: id_unregistered_rfid)
+
+### Field Size yang Dioptimasi
+| Field | Size | Keterangan |
+|-------|------|------------|
+| name | 100 | Nama orang/paket |
+| email | 100 | Alamat email |
+| phone | 15 | No HP (+62xxx) |
+| rfid_uid | 20 | UID kartu RFID |
+| photo | 100 | Path file foto |
+| membership_type.name | 50 | Nama jenis membership |
+| daily_package.name | 50 | Nama paket harian |
 
 ## Scheduled Tasks
 

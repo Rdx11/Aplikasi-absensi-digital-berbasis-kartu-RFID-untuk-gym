@@ -61,10 +61,10 @@ class MemberController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'rfid_uid' => 'required|string|unique:members,rfid_uid',
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
+            'rfid_uid' => 'required|string|max:20|unique:members,rfid_uid',
+            'name' => 'required|string|max:100',
+            'email' => 'nullable|email|max:100',
+            'phone' => 'nullable|string|max:15',
             'birth_date' => 'nullable|date',
             'gender' => 'nullable|in:male,female',
             'address' => 'nullable|string',
@@ -103,10 +103,10 @@ class MemberController extends Controller
     public function update(Request $request, Member $member)
     {
         $validated = $request->validate([
-            'rfid_uid' => 'required|string|unique:members,rfid_uid,' . $member->id,
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
+            'rfid_uid' => 'required|string|max:20|unique:members,rfid_uid,' . $member->id . ',id',
+            'name' => 'required|string|max:100',
+            'email' => 'nullable|email|max:100',
+            'phone' => 'nullable|string|max:15',
             'birth_date' => 'nullable|date',
             'gender' => 'nullable|in:male,female',
             'address' => 'nullable|string',

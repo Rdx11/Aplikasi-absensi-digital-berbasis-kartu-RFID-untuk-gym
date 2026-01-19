@@ -26,11 +26,11 @@ class MemberRenewal extends Model
 
     public function member(): BelongsTo
     {
-        return $this->belongsTo(Member::class);
+        return $this->belongsTo(Member::class, 'member_id', 'id');
     }
 
     public function membershipType(): BelongsTo
     {
-        return $this->belongsTo(MembershipType::class);
+        return $this->belongsTo(MembershipType::class, 'membership_type_id', 'id');
     }
 }

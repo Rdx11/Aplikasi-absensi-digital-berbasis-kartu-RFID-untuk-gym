@@ -50,21 +50,39 @@ class AttendanceController extends Controller
 
     public function storeManual(Request $request)
     {
-        $validated = $request->validate([
-            'guest_name' => 'required|string|max:255',
-            'daily_package_id' => 'required|exists:daily_packages,id',
-        ]);
+        $isMember = $request->boolean('is_member');
 
-        Attendance::create([
-            'is_member' => false,
-            'guest_name' => $validated['guest_name'],
-            'daily_package_id' => $validated['daily_package_id'],
-            'rfid_uid' => '-',
-            'check_in_time' => now(),
-            'date' => today(),
-        ]);
+        if ($isMember) {
+            $validated = $request->validate([
+                'member_id' => 'required|exists:members,id',
+            ]);
 
-        return redirect()->back()->with('success', 'Absensi non-member berhasil ditambahkan');
+            Attendance::create([
+                'is_member' => true,
+                'member_id' => $validated['member_id'],
+                'rfid_uid' => '-',
+                'check_in_time' => now(),
+                'date' => today(),
+            ]);
+
+            return redirect()->back()->with('success', 'Absensi member berhasil ditambahkan');
+        } else {
+            $validated = $request->validate([
+                'guest_name' => 'required|string|max:100',
+                'daily_package_id' => 'required|exists:daily_packages,id',
+            ]);
+
+            Attendance::create([
+                'is_member' => false,
+                'guest_name' => $validated['guest_name'],
+                'daily_package_id' => $validated['daily_package_id'],
+                'rfid_uid' => '-',
+                'check_in_time' => now(),
+                'date' => today(),
+            ]);
+
+            return redirect()->back()->with('success', 'Absensi non-member berhasil ditambahkan');
+        }
     }
 
     public function history(Request $request)

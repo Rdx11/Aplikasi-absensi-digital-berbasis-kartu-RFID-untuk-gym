@@ -27,11 +27,11 @@ class Attendance extends Model
 
     public function member(): BelongsTo
     {
-        return $this->belongsTo(Member::class);
+        return $this->belongsTo(Member::class, 'member_id', 'id');
     }
 
     public function dailyPackage(): BelongsTo
     {
-        return $this->belongsTo(DailyPackage::class);
+        return $this->belongsTo(DailyPackage::class, 'daily_package_id', 'id');
     }
 }

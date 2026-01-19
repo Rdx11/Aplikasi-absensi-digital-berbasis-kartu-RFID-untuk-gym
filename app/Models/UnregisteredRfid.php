@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class UnregisteredRfid extends Model
 {
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
+
     protected $fillable = [
         'rfid_uid',
         'scan_time',
