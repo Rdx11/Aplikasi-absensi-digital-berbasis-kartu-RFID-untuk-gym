@@ -10,7 +10,9 @@ export default function AttendancesIndex({ attendances, members, dailyPackages, 
     const [isLive, setIsLive] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showManualModal, setShowManualModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [latestMember, setLatestMember] = useState(null);
+    const [successMemberData, setSuccessMemberData] = useState(null);
     const [isMemberAttendance, setIsMemberAttendance] = useState(false);
     const intervalRef = useRef(null);
     const lastAttendanceIdRef = useRef(null);
@@ -82,10 +84,36 @@ export default function AttendancesIndex({ attendances, members, dailyPackages, 
     const submitManual = (e) => {
         e.preventDefault();
         post('/attendances/manual', {
-            onSuccess: () => {
+            onSuccess: (page) => {
                 setShowManualModal(false);
                 setIsMemberAttendance(false);
                 reset();
+                
+                // Tampilkan pop-up wajah/foto member
+                if (isMemberAttendance && page.props.attendances?.data?.[0]) {
+                    const attendance = page.props.attendances.data[0];
+                    if (attendance.member) {
+                        setSuccessMemberData({
+                            name: attendance.member.name,
+                            photo: attendance.member.photo,
+                            membership_type: attendance.member.membership_type?.name,
+                            check_in_time: attendance.check_in_time,
+                        });
+                        setShowSuccessModal(true);
+                        setTimeout(() => setShowSuccessModal(false), 5000);
+                    }
+                } else if (!isMemberAttendance && page.props.attendances?.data?.[0]) {
+                    // Untuk non-member, tampilkan nama dan paket
+                    const attendance = page.props.attendances.data[0];
+                    setSuccessMemberData({
+                        name: attendance.guest_name,
+                        photo: null,
+                        membership_type: attendance.daily_package?.name,
+                        check_in_time: attendance.check_in_time,
+                    });
+                    setShowSuccessModal(true);
+                    setTimeout(() => setShowSuccessModal(false), 5000);
+                }
             }
         });
     };
@@ -375,6 +403,46 @@ export default function AttendancesIndex({ attendances, members, dailyPackages, 
                             <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full">
                                 <ClockIcon className="w-5 h-5 text-green-500" />
                                 <span className="font-medium text-gray-700 dark:text-gray-300">{formatTime(latestMember.check_in_time)}</span>
+                            </div>
+                        </div>
+                        <div className="px-6 pb-6">
+                            <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div className="h-full bg-green-500 animate-shrink-width" />
+                            </div>
+                            <p className="text-xs text-center text-gray-400 mt-2">Otomatis tertutup dalam 5 detik</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Foto Member - Absensi Manual */}
+            {showSuccessModal && successMemberData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden">
+                        <div className="bg-green-500 px-6 py-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-white">
+                                <CheckCircleIcon className="w-6 h-6" />
+                                <span className="font-semibold text-lg">Check-in Berhasil!</span>
+                            </div>
+                            <button onClick={() => setShowSuccessModal(false)} className="text-white/80 hover:text-white">
+                                <XMarkIcon className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="p-6 text-center">
+                            <div className="w-40 h-40 mx-auto mb-4 rounded-full overflow-hidden border-4 border-green-500 shadow-lg">
+                                {successMemberData.photo ? (
+                                    <img src={`/storage/${successMemberData.photo}`} alt={successMemberData.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
+                                        <UsersIcon className="w-20 h-20 text-primary-600 dark:text-primary-400" />
+                                    </div>
+                                )}
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{successMemberData.name}</h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-3">{successMemberData.membership_type || 'Member'}</p>
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full">
+                                <ClockIcon className="w-5 h-5 text-green-500" />
+                                <span className="font-medium text-gray-700 dark:text-gray-300">{formatTime(successMemberData.check_in_time)}</span>
                             </div>
                         </div>
                         <div className="px-6 pb-6">
