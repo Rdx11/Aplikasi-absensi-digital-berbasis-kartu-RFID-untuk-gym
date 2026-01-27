@@ -28,29 +28,29 @@ class IncomeReportExport implements FromCollection, WithHeadings, WithMapping, W
     {
         $data = new Collection();
 
-        // Get membership income (new members)
-        $membershipIncome = Member::with('membershipType')
+        // Get membership income (new members from registrations)
+        $membershipIncome = \App\Models\MemberRegistration::with('membershipType')
             ->whereBetween('created_at', [$this->dateFrom . ' 00:00:00', $this->dateTo . ' 23:59:59'])
             ->get()
-            ->map(function ($member) {
+            ->map(function ($registration) {
                 return [
-                    'date' => $member->created_at->format('Y-m-d'),
+                    'date' => $registration->created_at->format('Y-m-d'),
                     'type' => 'Membership',
-                    'description' => 'Member Baru: ' . $member->name,
-                    'package' => $member->membershipType->name ?? '-',
-                    'amount' => $member->membershipType->price ?? 0,
+                    'description' => 'Member Baru: ' . $registration->member_name,
+                    'package' => $registration->membershipType->name ?? '-',
+                    'amount' => $registration->price ?? 0,
                 ];
             });
 
         // Get renewal income
-        $renewalIncome = MemberRenewal::with(['member', 'membershipType'])
+        $renewalIncome = MemberRenewal::with('membershipType')
             ->whereBetween('created_at', [$this->dateFrom . ' 00:00:00', $this->dateTo . ' 23:59:59'])
             ->get()
             ->map(function ($renewal) {
                 return [
                     'date' => $renewal->created_at->format('Y-m-d'),
                     'type' => 'Perpanjangan',
-                    'description' => 'Perpanjang: ' . ($renewal->member->name ?? '-'),
+                    'description' => 'Perpanjang: ' . ($renewal->member_name ?? '-'),
                     'package' => $renewal->membershipType->name ?? '-',
                     'amount' => $renewal->price ?? 0,
                 ];

@@ -5,24 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class MemberRenewal extends Model
+class MemberRegistration extends Model
 {
     protected $fillable = [
         'member_id',
-        'member_name',
         'membership_type_id',
-        'old_end_date',
-        'new_start_date',
-        'new_end_date',
+        'member_name',
         'price',
+        'membership_start_date',
+        'membership_end_date',
         'notes',
     ];
 
     protected $casts = [
-        'old_end_date' => 'date',
-        'new_start_date' => 'date',
-        'new_end_date' => 'date',
         'price' => 'decimal:2',
+        'membership_start_date' => 'date',
+        'membership_end_date' => 'date',
     ];
 
     public function member(): BelongsTo

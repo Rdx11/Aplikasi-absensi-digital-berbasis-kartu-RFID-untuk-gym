@@ -90,7 +90,7 @@ export default function Login() {
                                             value={data.email}
                                             onChange={(e) => setData('email', e.target.value)}
                                             className="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-                                            placeholder="admin@mikogym.com"
+                                            placeholder="username@email.com"
                                         />
                                     </div>
                                 </div>

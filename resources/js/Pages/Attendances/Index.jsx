@@ -25,7 +25,7 @@ export default function AttendancesIndex({ attendances, members, dailyPackages, 
 
     useEffect(() => {
         if (attendances.data?.length > 0) {
-            lastAttendanceIdRef.current = attendances.data[0].id_attendance;
+            lastAttendanceIdRef.current = attendances.data[0].id;
         }
     }, []);
 
@@ -38,7 +38,7 @@ export default function AttendancesIndex({ attendances, members, dailyPackages, 
                     onSuccess: (page) => {
                         const newAttendances = page.props.attendances.data;
                         if (newAttendances?.length > 0) {
-                            const newestId = newAttendances[0].id_attendance;
+                            const newestId = newAttendances[0].id;
                             if (lastAttendanceIdRef.current && newestId !== lastAttendanceIdRef.current) {
                                 const attendance = newAttendances[0];
                                 // Tampilkan pop-up untuk member

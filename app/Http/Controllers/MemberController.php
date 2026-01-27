@@ -64,8 +64,7 @@ class MemberController extends Controller
             'rfid_uid' => 'required|string|max:20|unique:members,rfid_uid',
             'name' => 'required|string|max:100',
             'email' => 'nullable|email|max:100',
-            'phone' => 'nullable|string|max:15',
-            'birth_date' => 'nullable|date',
+            'phone' => 'nullable|numeric',
             'gender' => 'nullable|in:male,female',
             'address' => 'nullable|string',
             'membership_type_id' => 'required|exists:membership_types,id',
@@ -81,7 +80,18 @@ class MemberController extends Controller
         }
 
         $validated['status'] = $request->boolean('status') ? 'active' : 'inactive';
-        Member::create($validated);
+        $member = Member::create($validated);
+
+        // Simpan transaksi registrasi member
+        $membershipType = MembershipType::findOrFail($validated['membership_type_id']);
+        \App\Models\MemberRegistration::create([
+            'member_id' => $member->id,
+            'membership_type_id' => $validated['membership_type_id'],
+            'member_name' => $validated['name'],
+            'price' => $membershipType->price,
+            'membership_start_date' => $validated['membership_start_date'],
+            'membership_end_date' => $validated['membership_end_date'],
+        ]);
 
         // Update unregistered_rfids jika ada
         UnregisteredRfid::where('rfid_uid', $validated['rfid_uid'])
@@ -106,8 +116,7 @@ class MemberController extends Controller
             'rfid_uid' => 'required|string|max:20|unique:members,rfid_uid,' . $member->id . ',id',
             'name' => 'required|string|max:100',
             'email' => 'nullable|email|max:100',
-            'phone' => 'nullable|string|max:15',
-            'birth_date' => 'nullable|date',
+            'phone' => 'nullable|numeric',
             'gender' => 'nullable|in:male,female',
             'address' => 'nullable|string',
             'membership_type_id' => 'required|exists:membership_types,id',
@@ -167,9 +176,10 @@ class MemberController extends Controller
         // Gunakan renewal_price jika ada, jika tidak gunakan price
         $renewalPrice = $membershipType->renewal_price ?? $membershipType->price;
 
-        // Simpan data perpanjangan
+        // Simpan data perpanjangan dengan member_name
         \App\Models\MemberRenewal::create([
             'member_id' => $member->id,
+            'member_name' => $member->name,
             'membership_type_id' => $membershipType->id,
             'old_end_date' => $oldEndDate,
             'new_start_date' => $newStartDate,

@@ -1,26 +1,9 @@
 /*
- * ESP32 RFID Scanner untuk Bricks Gym
+ * ESP32 RFID Scanner untuk Bricks Gym (HTTPS Version)
  * Menggunakan MFRC522 + LCD I2C 16x2
+ * Support untuk hosting dengan SSL/HTTPS
  * 
- * Wiring:
- * RFID MFRC522:
- * - SDA  -> GPIO 5
- * - SCK  -> GPIO 18
- * - MOSI -> GPIO 23
- * - MISO -> GPIO 19
- * - RST  -> GPIO 22
- * - 3.3V -> 3.3V
- * - GND  -> GND
- * 
- * LCD I2C:
- * - SDA -> GPIO 16
- * - SCL -> GPIO 17
- * - VCC -> 5V
- * - GND -> GND
- * 
- * Buzzer:
- * - Positif -> GPIO 14
- * - Negatif -> GND
+ * Wiring sama dengan versi HTTP
  */
 
 #include <Arduino.h>
@@ -28,24 +11,22 @@
 #include <SPI.h>
 #include <MFRC522.h>
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <ArduinoJson.h>
 
-// ========== WIFI ==============
-// Ganti dengan WiFi yang tersedia di lokasi gym
+// ========== KONFIGURASI ==============
+// WIFI
 const char* ssid     = "NAMA_WIFI_GYM";
 const char* password = "PASSWORD_WIFI_GYM";
 
-// ========== SERVER ENDPOINT ==========
-// UNTUK HOSTING:
-// Ganti dengan domain hosting Anda (tanpa https jika tidak ada SSL, dengan https jika ada SSL)
-// Contoh tanpa SSL: String serverName = "http://yourdomain.com/api/rfid/scan";
-// Contoh dengan SSL: String serverName = "https://yourdomain.com/api/rfid/scan";
-// 
-// UNTUK LOCALHOST (Development):
-// String serverName = "http://192.168.43.218:8000/api/rfid/scan";
+// SERVER ENDPOINT
+// Ganti dengan domain hosting Anda
 String serverName = "https://yourdomain.com/api/rfid/scan";
+
+// SSL/HTTPS - Set true jika menggunakan HTTPS
+bool useHTTPS = true;
 
 // ========== LCD ==========
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -92,6 +73,10 @@ void setup() {
         Serial.println("\nWiFi Connected!");
         Serial.print("IP: ");
         Serial.println(WiFi.localIP());
+        Serial.print("Server: ");
+        Serial.println(serverName);
+        Serial.print("HTTPS: ");
+        Serial.println(useHTTPS ? "Yes" : "No");
         
         lcd.clear();
         lcd.setCursor(0, 0);
@@ -166,10 +151,22 @@ void sendToServer(String rfidUid) {
     }
     
     HTTPClient http;
-    http.begin(serverName);
+    
+    if (useHTTPS) {
+        // Untuk HTTPS
+        WiFiClientSecure client;
+        client.setInsecure(); // Skip certificate verification
+        // Untuk production, gunakan: client.setCACert(root_ca);
+        
+        http.begin(client, serverName);
+    } else {
+        // Untuk HTTP
+        http.begin(serverName);
+    }
+    
     http.addHeader("Content-Type", "application/json");
     http.addHeader("Accept", "application/json");
-    http.setTimeout(10000);
+    http.setTimeout(15000); // 15 detik timeout
     
     // Buat JSON payload
     String payload = "{\"rfid_uid\":\"" + rfidUid + "\"}";
@@ -179,6 +176,7 @@ void sendToServer(String rfidUid) {
     
     if (httpCode > 0) {
         String response = http.getString();
+        Serial.println("HTTP Code: " + String(httpCode));
         Serial.println("Response: " + response);
         
         // Parse JSON
@@ -236,6 +234,7 @@ void sendToServer(String rfidUid) {
                 beepError();
             }
         } else {
+            Serial.println("JSON Parse Error: " + String(error.c_str()));
             lcd.clear();
             lcd.setCursor(0, 0);
             lcd.print("Parse Error");

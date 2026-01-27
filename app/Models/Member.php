@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Member extends Model
 {
@@ -50,5 +51,10 @@ class Member extends Model
     public function renewals(): HasMany
     {
         return $this->hasMany(MemberRenewal::class, 'member_id', 'id');
+    }
+
+    public function registration(): HasOne
+    {
+        return $this->hasOne(MemberRegistration::class, 'member_id', 'id');
     }
 }

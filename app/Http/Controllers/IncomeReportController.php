@@ -20,14 +20,12 @@ class IncomeReportController extends Controller
         $dateFrom = $request->date_from ?? today()->startOfMonth()->format('Y-m-d');
         $dateTo = $request->date_to ?? today()->format('Y-m-d');
 
-        // Income from new memberships (members registered in date range)
-        $membershipIncome = Member::with('membershipType')
+        // Income from new memberships (from member_registrations table)
+        $membershipIncome = \App\Models\MemberRegistration::with('membershipType')
             ->whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
             ->get();
 
-        $totalMembershipIncome = $membershipIncome->sum(function ($member) {
-            return $member->membershipType?->price ?? 0;
-        });
+        $totalMembershipIncome = $membershipIncome->sum('price');
 
         // Income from renewals
         $renewalIncome = MemberRenewal::whereBetween('created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'])
@@ -35,13 +33,13 @@ class IncomeReportController extends Controller
 
         $totalMembershipIncome += $renewalIncome;
 
-        // Income by membership type
+        // Income by membership type (from registrations)
         $incomeByMembershipType = MembershipType::select('membership_types.*')
-            ->selectRaw('COUNT(members.id) as new_members_count')
-            ->selectRaw('COALESCE(SUM(membership_types.price), 0) as total_income')
-            ->leftJoin('members', function ($join) use ($dateFrom, $dateTo) {
-                $join->on('membership_types.id', '=', 'members.membership_type_id')
-                    ->whereBetween('members.created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59']);
+            ->selectRaw('COUNT(member_registrations.id) as new_members_count')
+            ->selectRaw('COALESCE(SUM(member_registrations.price), 0) as total_income')
+            ->leftJoin('member_registrations', function ($join) use ($dateFrom, $dateTo) {
+                $join->on('membership_types.id', '=', 'member_registrations.membership_type_id')
+                    ->whereBetween('member_registrations.created_at', [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59']);
             })
             ->groupBy('membership_types.id')
             ->get()
@@ -51,7 +49,7 @@ class IncomeReportController extends Controller
                     'name' => $type->name,
                     'price' => $type->price,
                     'new_members' => $type->new_members_count,
-                    'total_income' => $type->new_members_count * $type->price,
+                    'total_income' => $type->total_income,
                 ];
             });
 
@@ -95,11 +93,8 @@ class IncomeReportController extends Controller
         while ($currentDate <= $endDate) {
             $date = $currentDate->format('Y-m-d');
             
-            // Membership income for this day (new members + renewals)
-            $dayMembershipIncome = Member::with('membershipType')
-                ->whereDate('created_at', $date)
-                ->get()
-                ->sum(fn($m) => $m->membershipType?->price ?? 0);
+            // Membership income for this day (new members from registrations + renewals)
+            $dayMembershipIncome = \App\Models\MemberRegistration::whereDate('created_at', $date)->sum('price');
 
             // Add renewal income for this day
             $dayMembershipIncome += MemberRenewal::whereDate('created_at', $date)->sum('price');

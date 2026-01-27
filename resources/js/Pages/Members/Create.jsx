@@ -12,7 +12,6 @@ export default function MembersCreate({ membershipTypes, rfidUid }) {
         rfid_uid: rfidUid || '',
         name: '',
         phone: '',
-        birth_date: '',
         gender: '',
         address: '',
         membership_type_id: '',
@@ -154,15 +153,20 @@ export default function MembersCreate({ membershipTypes, rfidUid }) {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">No. Telepon</label>
-                                <input type="text" value={data.phone} onChange={(e) => setData('phone', e.target.value)} className={inputClass} />
+                                <input 
+                                    type="text" 
+                                    value={data.phone} 
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, '');
+                                        setData('phone', value);
+                                    }} 
+                                    className={inputClass}
+                                    placeholder="08123456789"
+                                />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Tanggal Lahir</label>
-                                <input type="date" value={data.birth_date} onChange={(e) => setData('birth_date', e.target.value)} className={inputClass} />
-                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Jenis Kelamin</label>
                                 <select value={data.gender} onChange={(e) => setData('gender', e.target.value)} className={inputClass}>
@@ -171,11 +175,10 @@ export default function MembersCreate({ membershipTypes, rfidUid }) {
                                     <option value="female">Perempuan</option>
                                 </select>
                             </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Alamat</label>
-                            <textarea value={data.address} onChange={(e) => setData('address', e.target.value)} className={`${inputClass} resize-y`} rows="3" />
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Alamat</label>
+                                <textarea value={data.address} onChange={(e) => setData('address', e.target.value)} className={`${inputClass} resize-y`} rows="3" />
+                            </div>
                         </div>
                     </div>
                 </div>

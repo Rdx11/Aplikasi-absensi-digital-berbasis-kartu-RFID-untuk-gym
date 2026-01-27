@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Cek member expired setiap hari jam 00:01
 Schedule::command('members:check-expired')->dailyAt('00:01');
+
+// Archive data absensi setiap bulan tanggal 1 jam 02:00
+Schedule::command('attendance:archive')->monthlyOn(1, '02:00');
