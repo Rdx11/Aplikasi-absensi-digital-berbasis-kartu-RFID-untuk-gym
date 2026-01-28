@@ -65,6 +65,11 @@ class MemberController extends Controller
             'name' => 'required|string|max:100',
             'email' => 'nullable|email|max:100',
             'phone' => 'nullable|numeric',
+            'birth_date' => [
+                'required',
+                'date',
+                'before:' . now()->subYears(10)->format('Y-m-d'),
+            ],
             'gender' => 'nullable|in:male,female',
             'address' => 'nullable|string',
             'membership_type_id' => 'required|exists:membership_types,id',
@@ -72,6 +77,9 @@ class MemberController extends Controller
             'membership_end_date' => 'required|date|after_or_equal:membership_start_date',
             'status' => 'boolean',
             'photo' => 'nullable|image|max:2048',
+        ], [
+            'birth_date.required' => 'Tanggal lahir wajib diisi',
+            'birth_date.before' => 'Member harus berusia minimal 10 tahun',
         ]);
 
         if ($request->hasFile('photo')) {
@@ -117,6 +125,11 @@ class MemberController extends Controller
             'name' => 'required|string|max:100',
             'email' => 'nullable|email|max:100',
             'phone' => 'nullable|numeric',
+            'birth_date' => [
+                'required',
+                'date',
+                'before:' . now()->subYears(10)->format('Y-m-d'),
+            ],
             'gender' => 'nullable|in:male,female',
             'address' => 'nullable|string',
             'membership_type_id' => 'required|exists:membership_types,id',
@@ -124,6 +137,9 @@ class MemberController extends Controller
             'membership_end_date' => 'required|date|after_or_equal:membership_start_date',
             'status' => 'boolean',
             'photo' => 'nullable|image|max:2048',
+        ], [
+            'birth_date.required' => 'Tanggal lahir wajib diisi',
+            'birth_date.before' => 'Member harus berusia minimal 10 tahun',
         ]);
 
         if ($request->hasFile('photo')) {

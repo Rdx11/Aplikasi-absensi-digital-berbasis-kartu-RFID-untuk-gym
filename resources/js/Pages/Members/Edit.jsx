@@ -20,6 +20,7 @@ export default function MembersEdit({ member, membershipTypes }) {
         rfid_uid: member.rfid_uid || '',
         name: member.name || '',
         phone: member.phone || '',
+        birth_date: formatDateForInput(member.birth_date),
         gender: member.gender || '',
         address: member.address || '',
         membership_type_id: member.membership_type_id || '',
@@ -78,8 +79,9 @@ export default function MembersEdit({ member, membershipTypes }) {
     };
 
     const [dateError, setDateError] = useState('');
+    const [ageError, setAgeError] = useState('');
 
-    // Validasi tanggal
+    // Validasi tanggal keanggotaan
     useEffect(() => {
         if (data.membership_start_date && data.membership_end_date) {
             if (new Date(data.membership_start_date) > new Date(data.membership_end_date)) {
@@ -90,9 +92,31 @@ export default function MembersEdit({ member, membershipTypes }) {
         }
     }, [data.membership_start_date, data.membership_end_date]);
 
+    // Validasi umur minimal 10 tahun
+    useEffect(() => {
+        if (data.birth_date) {
+            const birthDate = new Date(data.birth_date);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            
+            if (age < 10) {
+                setAgeError('Member harus berusia minimal 10 tahun');
+            } else {
+                setAgeError('');
+            }
+        } else {
+            setAgeError('');
+        }
+    }, [data.birth_date]);
+
     const submit = (e) => {
         e.preventDefault();
-        if (dateError) return;
+        if (dateError || ageError) return;
         post(`/members/${member.id}`);
     };
 
@@ -142,6 +166,20 @@ export default function MembersEdit({ member, membershipTypes }) {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                    Tanggal Lahir<span className="text-red-500">*</span>
+                                </label>
+                                <input 
+                                    type="date" 
+                                    value={data.birth_date} 
+                                    onChange={(e) => setData('birth_date', e.target.value)} 
+                                    className={inputClass}
+                                    max={new Date().toISOString().split('T')[0]}
+                                />
+                                {ageError && <p className="text-red-500 text-sm mt-1">{ageError}</p>}
+                                {errors.birth_date && <p className="text-red-500 text-sm mt-1">{errors.birth_date}</p>}
+                            </div>
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Jenis Kelamin</label>
                                 <select value={data.gender} onChange={(e) => setData('gender', e.target.value)} className={inputClass}>
                                     <option value="">Pilih jenis kelamin</option>
@@ -149,10 +187,11 @@ export default function MembersEdit({ member, membershipTypes }) {
                                     <option value="female">Perempuan</option>
                                 </select>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Alamat</label>
-                                <textarea value={data.address} onChange={(e) => setData('address', e.target.value)} className={`${inputClass} resize-y`} rows="3" />
-                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Alamat</label>
+                            <textarea value={data.address} onChange={(e) => setData('address', e.target.value)} className={`${inputClass} resize-y`} rows="3" />
                         </div>
                     </div>
                 </div>
